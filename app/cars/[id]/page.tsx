@@ -6,11 +6,19 @@ import { Car } from '@/types'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Calendar, Gauge, Fuel, Settings, MapPin, Eye } from 'lucide-react'
+import { ArrowLeft, Calendar, Gauge, Fuel, Settings, MapPin, Eye, Phone, MessageCircle, Mail, Edit } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { ImageGallery } from '@/components/image-gallery'
+import { Header } from '@/components/header'
+import { Footer } from '@/components/footer'
+import { useAuth } from '@/contexts/auth-context'
+import { getFuelText, getTransmissionText, getDriveText, getBodyTypeText, getConditionText } from '@/lib/translations'
 
-// Функция для преобразования данных из API в формат Car
+// API → Car
 function transformCarFromAPI(carData: any): Car {
   return {
     id: carData.id,
@@ -41,12 +49,13 @@ function transformCarFromAPI(carData: any): Car {
     status: carData.status as Car['status'],
     createdAt: carData.createdAt,
     views: carData.views,
-    admin: carData.admin
+    admin: carData.admin,
   }
 }
 
 export default function CarDetailPage() {
   const params = useParams()
+  const { isAuthenticated } = useAuth()
   const [car, setCar] = useState<Car | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -54,300 +63,245 @@ export default function CarDetailPage() {
   useEffect(() => {
     const fetchCar = async () => {
       if (!params.id) return
-      
       setLoading(true)
       try {
-        console.log('Fetching car with ID:', params.id)
         const response = await fetch(`/api/cars/${params.id}`)
-        console.log('Response status:', response.status)
-        
         if (!response.ok) {
-          if (response.status === 404) {
-            throw new Error('Автомобиль не найден')
-          }
-          throw new Error(`HTTP error! status: ${response.status}`)
+          throw new Error(response.status === 404 ? 'Автомобиль не найден' : `Ошибка: ${response.status}`)
         }
-        
         const data = await response.json()
-        console.log('Car data:', data)
-        
-        const transformedCar = transformCarFromAPI(data)
-        setCar(transformedCar)
+        setCar(transformCarFromAPI(data))
         setError('')
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Неизвестная ошибка'
-        setError(`Ошибка при загрузке автомобиля: ${errorMessage}`)
-        console.error('Fetch error:', err)
+        setError(err instanceof Error ? err.message : 'Неизвестная ошибка')
       }
       setLoading(false)
     }
-
     fetchCar()
   }, [params.id])
 
-  const formatPrice = (price: number, currency: string) => {
-    return new Intl.NumberFormat('ru-RU').format(price) + ' ' + currency
-  }
+  const formatPrice = (price: number, currency: string) =>
+    new Intl.NumberFormat('ru-RU').format(price) + ' ' + currency
 
-  const formatMileage = (mileage: number) => {
-    return new Intl.NumberFormat('ru-RU').format(mileage) + ' км'
-  }
 
-  const getConditionText = (condition: string) => {
-    switch (condition) {
-      case 'excellent': return 'Отличное'
-      case 'good': return 'Хорошее'
-      case 'fair': return 'Удовлетворительное'
-      case 'poor': return 'Плохое'
-      default: return condition
-    }
-  }
 
-  const getTransmissionText = (transmission: string) => {
-    switch (transmission) {
-      case 'automatic': return 'Автоматическая'
-      case 'manual': return 'Механическая'
-      case 'robot': return 'Робот'
-      case 'variator': return 'Вариатор'
-      default: return transmission
-    }
-  }
+  const ContactForm = ({ type }: { type: 'question' | 'viewing' }) => (
+    <div className="space-y-4">
+      <Input placeholder="Ваше имя" />
+      <Input placeholder="Телефон" />
+      <Input placeholder="Email (необязательно)" />
+      <Textarea placeholder={type === 'question' ? 'Ваш вопрос' : 'Удобное время для показа'} rows={3} />
+      <Button className="w-full">{type === 'question' ? 'Отправить вопрос' : 'Записаться на показ'}</Button>
+    </div>
+  )
 
-  const getFuelText = (fuel: string) => {
-    switch (fuel) {
-      case 'petrol': return 'Бензин'
-      case 'diesel': return 'Дизель'
-      case 'hybrid': return 'Гибрид'
-      case 'electric': return 'Электро'
-      case 'gas': return 'Газ'
-      default: return fuel
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-2">Загрузка автомобиля...</span>
-        </div>
+  if (loading) return (
+    <div className="container mx-auto px-4 py-8 text-center">
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <span className="ml-2">Загрузка...</span>
       </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center gap-4 mb-6">
-          <Button variant="outline" asChild>
-            <Link href="/cars">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Назад к списку
-            </Link>
-          </Button>
-        </div>
-        
-        <Card className="border-red-200 bg-red-50">
-          <CardContent className="pt-6">
-            <div className="text-center py-8">
-              <h2 className="text-xl font-semibold text-red-600 mb-2">Ошибка</h2>
-              <p className="text-red-600">{error}</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
-  if (!car) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center gap-4 mb-6">
-          <Button variant="outline" asChild>
-            <Link href="/cars">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Назад к списку
-            </Link>
-          </Button>
-        </div>
-        
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center py-8">
-              <h2 className="text-xl font-semibold text-gray-600 mb-2">Автомобиль не найден</h2>
-              <p className="text-gray-500">Запрашиваемый автомобиль не существует или был удален</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
+    </div>
+  )
+  
+  if (error || !car) return (
+    <div className="container mx-auto px-4 py-8 text-center">
+      <div className="text-red-500">{error || 'Автомобиль не найден'}</div>
+      <Button asChild className="mt-4">
+        <Link href="/cars">Вернуться к списку</Link>
+      </Button>
+    </div>
+  )
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center gap-4 mb-6">
-        <Button variant="outline" asChild>
-          <Link href="/cars">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Назад к списку
-          </Link>
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Фотографии */}
-        <div>
-          <Card>
-            <CardContent className="p-0">
-              <Image
-                src={car.photos[0] || '/placeholder.svg?height=400&width=600&query=car'}
-                alt={`${car.brand} ${car.model}`}
-                width={600}
-                height={400}
-                className="w-full h-96 object-cover rounded-t-lg"
-              />
-            </CardContent>
-          </Card>
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+      
+      <div className="container mx-auto px-4 py-4 sm:py-8">
+        <div className="flex items-center gap-4 mb-4 sm:mb-6">
+          <Button variant="outline" asChild size="sm" className="text-xs sm:text-sm">
+            <Link href="/cars">
+              <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" /> 
+              Назад к списку
+            </Link>
+          </Button>
         </div>
 
-        {/* Информация об автомобиле */}
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">
-              {car.brand} {car.model} {car.generation}
-            </h1>
-            <div className="flex items-center gap-4 text-gray-600">
-              <div className="flex items-center">
-                <MapPin className="h-4 w-4 mr-1" />
-                {car.city}
+        <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 mb-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8">
+            {/* Фото */}
+            <div className="lg:col-span-2">
+              <ImageGallery 
+                images={car.photos || []} 
+                alt={`${car.brand} ${car.model}`}
+                className="w-full"
+              />
+            </div>
+
+            {/* Инфо */}
+            <div className="space-y-4 sm:space-y-6">
+          <Card>
+            <CardHeader className="pb-3 sm:pb-6">
+              <div className="flex items-start justify-between gap-2">
+                <CardTitle className="text-lg sm:text-xl lg:text-2xl leading-tight">
+                  {car.brand} {car.model} {car.generation}
+                </CardTitle>
+                {car.negotiable && <Badge className="bg-green-600 text-xs flex-shrink-0">Торг</Badge>}
               </div>
-              <div className="flex items-center">
-                <Eye className="h-4 w-4 mr-1" />
-                {car.views} просмотров
+              <div className="text-2xl sm:text-3xl font-bold text-blue-600">
+                {formatPrice(car.price, car.currency)}
               </div>
+            </CardHeader>
+
+            <CardContent className="space-y-3 sm:space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 text-xs sm:text-sm">
+                <div className="flex items-center">
+                  <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" /> 
+                  {car.year} год
+                </div>
+                <div className="flex items-center">
+                  <Gauge className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" /> 
+                  {car.mileage.toLocaleString()} км
+                </div>
+                <div className="flex items-center">
+                  <Fuel className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" /> 
+                  {getFuelText(car.fuel)}
+                </div>
+                <div className="flex items-center">
+                  <Settings className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" /> 
+                  {getTransmissionText(car.transmission)}
+                </div>
+                <div className="flex items-center">
+                  <MapPin className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" /> 
+                  {car.city}
+                </div>
+                <div className="flex items-center">
+                  <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" /> 
+                  {car.views} просмотров
+                </div>
+              </div>
+
+              <div className="pt-3 sm:pt-4 border-t">
+                <h4 className="font-semibold mb-2 text-sm sm:text-base">Характеристики</h4>
+                <div className="grid grid-cols-1 gap-1 sm:gap-2 text-xs sm:text-sm">
+                  <div className="flex justify-between">
+                    <span>Мощность:</span>
+                    <span>{car.power} л.с.</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Объем двигателя:</span>
+                    <span>{car.engineVolume} л</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Привод:</span>
+                    <span>{getDriveText(car.drive)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Кузов:</span>
+                    <span>{getBodyTypeText(car.bodyType)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Цвет:</span>
+                    <span>{car.color}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Экологический стандарт:</span>
+                    <span>Евро {car.euroStandard}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>VIN:</span>
+                    <span className="font-mono text-xs">{car.vin}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Количество владельцев:</span>
+                    <span>{car.owners}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Растаможен:</span>
+                    <span>{car.customs ? 'Да' : 'Нет'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>НДС:</span>
+                    <span>{car.vat ? 'Да' : 'Нет'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Состояние:</span>
+                    <span>{getConditionText(car.condition)}</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Кнопки */}
+          <div className="space-y-2 sm:space-y-3">
+            {/* Кнопка редактирования для админов */}
+            {isAuthenticated && (
+              <Button asChild className="w-full text-sm sm:text-base bg-orange-600 hover:bg-orange-700" size="sm">
+                <Link href={`/dealer/edit-car/${car.id}`}>
+                  <Edit className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                  Редактировать
+                </Link>
+              </Button>
+            )}
+            
+            <Button className="w-full text-sm sm:text-base" size="sm" asChild>
+              <a href="tel:+32487250651">
+                <Phone className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> 
+                Позвонить
+              </a>
+            </Button>
+            <Button className="w-full bg-green-600 hover:bg-green-700 text-sm sm:text-base" size="sm">
+              <MessageCircle className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> 
+              <Link href="https://wa.me/+32487250651">WhatsApp</Link>
+            </Button>
+
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="w-full text-sm sm:text-base" size="sm">
+                  <Mail className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> 
+                  Задать вопрос
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Задать вопрос</DialogTitle>
+                </DialogHeader>
+                <ContactForm type="question" />
+              </DialogContent>
+            </Dialog>
+
+                          <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="w-full text-sm sm:text-base" size="sm">
+                    <Calendar className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> 
+                    Записаться на показ
+                  </Button>
+                </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Записаться на показ</DialogTitle>
+                </DialogHeader>
+                <ContactForm type="viewing" />
+              </DialogContent>
+            </Dialog>
+          </div>
             </div>
           </div>
-
-          <div className="text-3xl font-bold text-blue-600">
-            {formatPrice(car.price, car.currency)}
-            {car.negotiable && (
-              <Badge className="ml-2 bg-green-600">Торг</Badge>
-            )}
-          </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Основные характеристики</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex items-center">
-                  <Calendar className="h-4 w-4 mr-2 text-gray-500" />
-                  <span className="text-sm text-gray-600">Год выпуска:</span>
-                  <span className="ml-auto font-medium">{car.year}</span>
-                </div>
-                <div className="flex items-center">
-                  <Gauge className="h-4 w-4 mr-2 text-gray-500" />
-                  <span className="text-sm text-gray-600">Пробег:</span>
-                  <span className="ml-auto font-medium">{formatMileage(car.mileage)}</span>
-                </div>
-                <div className="flex items-center">
-                  <Fuel className="h-4 w-4 mr-2 text-gray-500" />
-                  <span className="text-sm text-gray-600">Топливо:</span>
-                  <span className="ml-auto font-medium">{getFuelText(car.fuel)}</span>
-                </div>
-                <div className="flex items-center">
-                  <Settings className="h-4 w-4 mr-2 text-gray-500" />
-                  <span className="text-sm text-gray-600">Коробка:</span>
-                  <span className="ml-auto font-medium">{getTransmissionText(car.transmission)}</span>
-                </div>
-                <div className="flex items-center">
-                  <span className="text-sm text-gray-600">Цвет:</span>
-                  <span className="ml-auto font-medium">{car.color}</span>
-                </div>
-                <div className="flex items-center">
-                  <span className="text-sm text-gray-600">Состояние:</span>
-                  <span className="ml-auto font-medium">{getConditionText(car.condition)}</span>
-                </div>
-                <div className="flex items-center">
-                  <span className="text-sm text-gray-600">Мощность:</span>
-                  <span className="ml-auto font-medium">{car.power} л.с.</span>
-                </div>
-                <div className="flex items-center">
-                  <span className="text-sm text-gray-600">Объем двигателя:</span>
-                  <span className="ml-auto font-medium">{car.engineVolume} л</span>
-                </div>
-                <div className="flex items-center">
-                  <span className="text-sm text-gray-600">Владельцев:</span>
-                  <span className="ml-auto font-medium">{car.owners}</span>
-                </div>
-                <div className="flex items-center">
-                  <span className="text-sm text-gray-600">Привод:</span>
-                  <span className="ml-auto font-medium">
-                    {car.drive === 'front' ? 'Передний' : 
-                     car.drive === 'rear' ? 'Задний' : 
-                     car.drive === 'all' ? 'Полный' : car.drive}
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Дополнительная информация</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">VIN:</span>
-                  <span className="font-mono text-sm">{car.vin}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Евростандарт:</span>
-                  <span>{car.euroStandard}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Растаможен:</span>
-                  <span>{car.customs ? 'Да' : 'Нет'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">НДС:</span>
-                  <span>{car.vat ? 'Да' : 'Нет'}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {car.description && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Описание</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-700 whitespace-pre-wrap">{car.description}</p>
-              </CardContent>
-            </Card>
-          )}
-
-          {car.admin && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Продавец</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">{car.admin.name}</p>
-                    <p className="text-sm text-gray-600">{car.admin.email}</p>
-                  </div>
-                  <Button variant="outline">Связаться</Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
         </div>
+
+        {/* Описание */}
+        {car.description && (
+          <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Описание</h2>
+            <p className="text-gray-700 leading-relaxed text-sm sm:text-base">
+              {car.description}
+            </p>
+          </div>
+        )}
       </div>
+      
+      <Footer />
     </div>
   )
 }

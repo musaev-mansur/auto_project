@@ -29,9 +29,6 @@ export function DealerHeader() {
             >
               Посмотреть сайт
             </Link>
-            <div className="text-sm text-gray-600">
-              Добро пожаловать, {admin?.name || 'Администратор'}
-            </div>
             <Button 
               variant="outline" 
               size="sm" 

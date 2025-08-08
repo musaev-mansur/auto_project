@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
 import { Button } from '@/components/ui/button'
@@ -21,10 +21,11 @@ export default function LoginPage() {
   })
 
   // Если уже авторизован, перенаправляем на панель дилера
-  if (isAuthenticated) {
-    router.push('/dealer')
-    return null
-  }
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push('/dealer')
+    }
+  }, [isAuthenticated, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -47,6 +48,18 @@ export default function LoginPage() {
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
+  }
+
+  // Если уже авторизован, показываем загрузку
+  if (isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p>Перенаправление...</p>
+        </div>
+      </div>
+    )
   }
 
   return (

@@ -4,9 +4,17 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Car, RefreshCw, Plus } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Car, RefreshCw, Plus, ArrowLeft, Filter, X, Edit } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Car as CarType } from '@/types'
+import { Header } from '@/components/header'
+import { Footer } from '@/components/footer'
+import { useAuth } from '@/contexts/auth-context'
+import { getFuelText, getTransmissionText, getStatusText } from '@/lib/translations'
 
 // Функция для преобразования данных из API в формат Car
 function transformCarFromAPI(carData: any): CarType {
@@ -44,9 +52,29 @@ function transformCarFromAPI(carData: any): CarType {
 }
 
 export default function CarsPage() {
+  const { isAuthenticated } = useAuth()
   const [cars, setCars] = useState<CarType[]>([])
+  const [filteredCars, setFilteredCars] = useState<CarType[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [showFilters, setShowFilters] = useState(false)
+  const [filters, setFilters] = useState({
+    brand: '',
+    priceFrom: '',
+    priceTo: '',
+    yearFrom: '',
+    yearTo: '',
+    transmission: 'all',
+    fuel: 'all',
+    status: 'all',
+    city: ''
+  })
+
+  // Получаем уникальные значения для фильтров
+  const getUniqueValues = (field: keyof CarType) => {
+    const values = cars.map(car => car[field]).filter((value): value is string => typeof value === 'string')
+    return [...new Set(values)].sort()
+  }
 
   const fetchCars = async () => {
     setLoading(true)
@@ -66,6 +94,7 @@ export default function CarsPage() {
       console.log('Преобразованные автомобили:', transformedCars)
       
       setCars(transformedCars)
+      setFilteredCars(transformedCars)
       setError('')
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Неизвестная ошибка'
@@ -78,6 +107,71 @@ export default function CarsPage() {
   useEffect(() => {
     fetchCars()
   }, [])
+
+  // Применяем фильтры
+  useEffect(() => {
+    let filtered = cars
+
+    if (filters.brand) {
+      filtered = filtered.filter(car => 
+        car.brand.toLowerCase().includes(filters.brand.toLowerCase())
+      )
+    }
+
+    if (filters.priceFrom) {
+      filtered = filtered.filter(car => car.price >= parseInt(filters.priceFrom))
+    }
+
+    if (filters.priceTo) {
+      filtered = filtered.filter(car => car.price <= parseInt(filters.priceTo))
+    }
+
+    if (filters.yearFrom) {
+      filtered = filtered.filter(car => car.year >= parseInt(filters.yearFrom))
+    }
+
+    if (filters.yearTo) {
+      filtered = filtered.filter(car => car.year <= parseInt(filters.yearTo))
+    }
+
+    if (filters.transmission && filters.transmission !== 'all') {
+      filtered = filtered.filter(car => car.transmission === filters.transmission)
+    }
+
+    if (filters.fuel && filters.fuel !== 'all') {
+      filtered = filtered.filter(car => car.fuel === filters.fuel)
+    }
+
+    if (filters.status && filters.status !== 'all') {
+      filtered = filtered.filter(car => car.status === filters.status)
+    }
+
+    if (filters.city) {
+      filtered = filtered.filter(car => 
+        car.city.toLowerCase().includes(filters.city.toLowerCase())
+      )
+    }
+
+    setFilteredCars(filtered)
+  }, [cars, filters])
+
+  const handleFilterChange = (key: string, value: string) => {
+    setFilters(prev => ({ ...prev, [key]: value }))
+  }
+
+  const resetFilters = () => {
+    setFilters({
+      brand: '',
+      priceFrom: '',
+      priceTo: '',
+      yearFrom: '',
+      yearTo: '',
+      transmission: 'all',
+      fuel: 'all',
+      status: 'all',
+      city: ''
+    })
+  }
 
   const formatPrice = (price: number, currency: string) => {
     return new Intl.NumberFormat('ru-RU').format(price) + ' ' + currency
@@ -96,41 +190,57 @@ export default function CarsPage() {
     }
   }
 
+
+
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center h-64">
-          <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
-          <span className="ml-2">Загрузка автомобилей...</span>
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center h-64">
+            <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
+            <span className="ml-2">Загрузка автомобилей...</span>
+          </div>
         </div>
+        <Footer />
       </div>
     )
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
-          <Car className="h-8 w-8 text-blue-600" />
-          <h1 className="text-3xl font-bold">Автомобили</h1>
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+      
+      <div className="container mx-auto px-4 py-4 sm:py-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <Button variant="outline" asChild size="sm" className="text-xs sm:text-sm">
+            <Link href="/">
+              <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+              Назад
+            </Link>
+          </Button>
+          <div className="flex items-center gap-2 sm:gap-4">
+            <Car className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
+            <h1 className="text-xl sm:text-3xl font-bold">Автомобили</h1>
+          </div>
         </div>
-                 <div className="flex gap-4">
-           <Button onClick={fetchCars} variant="outline">
-             <RefreshCw className="h-4 w-4 mr-2" />
-             Обновить
-           </Button>
-           <Button asChild>
-             <Link href="/dealer/add-car">
-               <Plus className="h-4 w-4 mr-2" />
-               Добавить автомобиль
-             </Link>
-           </Button>
-           <Button asChild variant="outline">
-             <Link href="/debug">
-               Отладка
-             </Link>
-           </Button>
-         </div>
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+          <Button onClick={fetchCars} variant="outline" size="sm" className="text-xs sm:text-sm w-full sm:w-auto">
+            <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+            Обновить
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="text-xs sm:text-sm w-full sm:w-auto"
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            <Filter className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+            Фильтры
+          </Button>
+        </div>
       </div>
 
       {error && (
@@ -141,101 +251,288 @@ export default function CarsPage() {
         </Card>
       )}
 
-      {cars.length === 0 ? (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center py-8">
-              <Car className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-600 mb-2">
-                Автомобили не найдены
-              </h3>
-              <p className="text-gray-500 mb-4">
-                В базе данных пока нет автомобилей
-              </p>
-              <Button asChild>
-                <Link href="/dealer/add-car">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Добавить первый автомобиль
-                </Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {cars.map((car) => (
-            <Card key={car.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="text-lg">
-                      {car.brand} {car.model}
-                    </CardTitle>
-                    <p className="text-sm text-gray-600">{car.year} год</p>
-                  </div>
-                  <Badge className={getStatusColor(car.status)}>
-                    {car.status === 'published' ? 'Опубликован' : 
-                     car.status === 'draft' ? 'Черновик' : 
-                     car.status === 'sold' ? 'Продан' : car.status}
-                  </Badge>
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Фильтры */}
+        {showFilters && (
+          <div className="lg:w-80">
+            <Card>
+              <CardHeader className="pb-3 sm:pb-6">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base sm:text-lg">Фильтры</CardTitle>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setShowFilters(false)}
+                    className="lg:hidden"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
                 </div>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Цена:</span>
-                    <span className="font-semibold">{formatPrice(car.price, car.currency)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Пробег:</span>
-                    <span>{new Intl.NumberFormat('ru-RU').format(car.mileage)} км</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Цвет:</span>
-                    <span>{car.color}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Трансмиссия:</span>
-                    <span>{car.transmission === 'automatic' ? 'Автомат' : 'Механика'}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Топливо:</span>
-                    <span>{car.fuel === 'petrol' ? 'Бензин' : 
-                           car.fuel === 'diesel' ? 'Дизель' : 
-                           car.fuel === 'hybrid' ? 'Гибрид' : 
-                           car.fuel === 'electric' ? 'Электро' : car.fuel}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Просмотры:</span>
-                    <span>{car.views}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Добавлен:</span>
-                    <span>{formatDate(car.createdAt)}</span>
-                  </div>
-                  {car.admin && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Админ:</span>
-                      <span>{car.admin.name}</span>
-                    </div>
-                  )}
+              <CardContent className="space-y-4">
+                <div>
+                  <Label className="text-sm">Марка</Label>
+                  <Input
+                    placeholder="Введите марку"
+                    value={filters.brand}
+                    onChange={(e) => handleFilterChange('brand', e.target.value)}
+                    className="text-sm"
+                  />
                 </div>
-                <div className="mt-4 pt-4 border-t">
-                  <Button variant="outline" className="w-full" asChild>
-                    <Link href={`/cars/${car.id}`}>
-                      Подробнее
-                    </Link>
-                  </Button>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-sm">Цена от</Label>
+                    <Input
+                      placeholder="0"
+                      type="number"
+                      value={filters.priceFrom}
+                      onChange={(e) => handleFilterChange('priceFrom', e.target.value)}
+                      className="text-sm"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm">Цена до</Label>
+                    <Input
+                      placeholder="100000"
+                      type="number"
+                      value={filters.priceTo}
+                      onChange={(e) => handleFilterChange('priceTo', e.target.value)}
+                      className="text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-sm">Год от</Label>
+                    <Input
+                      placeholder="2000"
+                      type="number"
+                      value={filters.yearFrom}
+                      onChange={(e) => handleFilterChange('yearFrom', e.target.value)}
+                      className="text-sm"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm">Год до</Label>
+                    <Input
+                      placeholder="2024"
+                      type="number"
+                      value={filters.yearTo}
+                      onChange={(e) => handleFilterChange('yearTo', e.target.value)}
+                      className="text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-sm">Коробка передач</Label>
+                  <Select value={filters.transmission} onValueChange={(value) => handleFilterChange('transmission', value)}>
+                    <SelectTrigger className="text-sm">
+                      <SelectValue placeholder="Все" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Все</SelectItem>
+                      {getUniqueValues('transmission').map(transmission => (
+                        <SelectItem key={transmission} value={transmission}>
+                          {getTransmissionText(transmission)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label className="text-sm">Топливо</Label>
+                  <Select value={filters.fuel} onValueChange={(value) => handleFilterChange('fuel', value)}>
+                    <SelectTrigger className="text-sm">
+                      <SelectValue placeholder="Все" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Все</SelectItem>
+                      {getUniqueValues('fuel').map(fuel => (
+                        <SelectItem key={fuel} value={fuel}>
+                          {getFuelText(fuel)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label className="text-sm">Статус</Label>
+                  <Select value={filters.status} onValueChange={(value) => handleFilterChange('status', value)}>
+                    <SelectTrigger className="text-sm">
+                      <SelectValue placeholder="Все" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Все</SelectItem>
+                      {getUniqueValues('status').map(status => (
+                        <SelectItem key={status} value={status}>
+                          {status === 'published' ? 'Опубликован' : 
+                           status === 'draft' ? 'Черновик' : 
+                           status === 'sold' ? 'Продан' : status}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label className="text-sm">Город</Label>
+                  <Input
+                    placeholder="Введите город"
+                    value={filters.city}
+                    onChange={(e) => handleFilterChange('city', e.target.value)}
+                    className="text-sm"
+                  />
+                </div>
+
+                <Button 
+                  variant="outline" 
+                  onClick={resetFilters} 
+                  className="w-full text-sm"
+                >
+                  Сбросить фильтры
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Список автомобилей */}
+        <div className="flex-1">
+          {filteredCars.length === 0 ? (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center py-8">
+                  <Car className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-600 mb-2">
+                    {cars.length === 0 ? 'Автомобили не найдены' : 'По фильтрам ничего не найдено'}
+                  </h3>
+                  <p className="text-gray-500 mb-4">
+                    {cars.length === 0 
+                      ? 'В базе данных пока нет автомобилей'
+                      : 'Попробуйте изменить параметры фильтрации'
+                    }
+                  </p>
+                  {cars.length === 0 && (
+                    <Button asChild>
+                      <Link href="/dealer/add-car">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Добавить первый автомобиль
+                      </Link>
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
-      )}
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              {filteredCars.map((car) => (
+                <Card key={car.id} className="hover:shadow-lg transition-shadow h-full">
+                  {/* Фото превью */}
+                  <div className="relative h-48 sm:h-56">
+                    <Image
+                      src={car.photos?.[0] || '/placeholder.svg?height=200&width=300&query=car'}
+                      alt={`${car.brand} ${car.model}`}
+                      fill
+                      className="object-cover rounded-t-lg"
+                    />
+                    {car.negotiable && (
+                      <Badge className="absolute top-2 right-2 bg-green-600 text-xs">
+                        Торг
+                      </Badge>
+                    )}
+                    <Badge className={`absolute top-2 left-2 ${getStatusColor(car.status)} text-xs`}>
+                      {car.status === 'published' ? 'Опубликован' : 
+                       car.status === 'draft' ? 'Черновик' : 
+                       car.status === 'sold' ? 'Продан' : car.status}
+                    </Badge>
+                  </div>
 
-      <div className="mt-8 text-center text-sm text-gray-500">
-        Всего автомобилей: {cars.length}
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base sm:text-lg line-clamp-2">
+                      {car.brand} {car.model} {car.generation}
+                    </CardTitle>
+                    <p className="text-sm text-gray-600">{car.year} год</p>
+                  </CardHeader>
+
+                                     <CardContent className="pt-0">
+                     <div className="space-y-2">
+                       <div className="flex justify-between text-sm">
+                         <span className="text-gray-600">Цена:</span>
+                         <span className="font-semibold text-blue-600">{formatPrice(car.price, car.currency)}</span>
+                       </div>
+                       <div className="flex justify-between text-sm">
+                         <span className="text-gray-600">Пробег:</span>
+                         <span>{new Intl.NumberFormat('ru-RU').format(car.mileage)} км</span>
+                       </div>
+                       <div className="flex justify-between text-sm">
+                         <span className="text-gray-600">Мощность:</span>
+                         <span>{car.power} л.с.</span>
+                       </div>
+                       <div className="flex justify-between text-sm">
+                         <span className="text-gray-600">Объем:</span>
+                         <span>{car.engineVolume} л</span>
+                       </div>
+                       <div className="flex justify-between text-sm">
+                         <span className="text-gray-600">Цвет:</span>
+                         <span>{car.color}</span>
+                       </div>
+                       <div className="flex justify-between text-sm">
+                         <span className="text-gray-600">Коробка:</span>
+                         <span>{getTransmissionText(car.transmission)}</span>
+                       </div>
+                       <div className="flex justify-between text-sm">
+                         <span className="text-gray-600">Топливо:</span>
+                         <span>{getFuelText(car.fuel)}</span>
+                       </div>
+                       <div className="flex justify-between text-sm">
+                         <span className="text-gray-600">Евро:</span>
+                         <span>{car.euroStandard}</span>
+                       </div>
+                       <div className="flex justify-between text-sm">
+                         <span className="text-gray-600">Владельцев:</span>
+                         <span>{car.owners}</span>
+                       </div>
+                       <div className="flex justify-between text-sm">
+                         <span className="text-gray-600">Просмотры:</span>
+                         <span>{car.views}</span>
+                       </div>
+                     </div>
+                    
+                    <div className="mt-4 pt-4 border-t">
+                      <div className="flex gap-2">
+                        <Button variant="outline" className="flex-1 text-sm" asChild>
+                          <Link href={`/cars/${car.id}`}>
+                            Подробнее
+                          </Link>
+                        </Button>
+                        {isAuthenticated && (
+                          <Button variant="outline" size="sm" className="text-xs" asChild>
+                            <Link href={`/dealer/edit-car/${car.id}`}>
+                              <Edit className="h-3 w-3" />
+                            </Link>
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          <div className="mt-6 sm:mt-8 text-center text-sm text-gray-500">
+            Показано: {filteredCars.length} из {cars.length} автомобилей
+          </div>
+        </div>
       </div>
+      </div>
+      
+      <Footer />
     </div>
   )
 }

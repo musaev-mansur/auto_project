@@ -8,6 +8,23 @@ const nextConfig = {
   },
   images: {
     unoptimized: true,
+    domains: ['localhost'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '3000',
+      }
+    ],
+  },
+  // Настройки для production
+  output: 'standalone',
+  experimental: {
+    outputFileTracingRoot: undefined,
   },
 }
 

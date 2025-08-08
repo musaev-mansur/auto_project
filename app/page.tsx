@@ -76,7 +76,7 @@ export default function HomePage() {
   const handleFiltersChange = (filters: any) => {
     let filtered = cars
 
-    if (filters.brand) {
+    if (filters.brand && filters.brand !== 'all') {
       filtered = filtered.filter(car => car.brand.toLowerCase().includes(filters.brand.toLowerCase()))
     }
 
@@ -100,86 +100,79 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
       <Header />
       
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold mb-4">
+      <section className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-8 md:py-16 px-4">
+        <div className="container mx-auto text-center">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-bold mb-4">
             Автомобили и запчасти
           </h1>
-          <p className="text-xl mb-8">
+          <p className="text-lg md:text-xl mb-6 md:mb-8 px-4">
             Качественные автомобили и оригинальные запчасти по лучшим ценам
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100" asChild>
+          <div className="flex flex-col gap-3 md:flex-row md:gap-4 justify-center items-center">
+            <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100 w-full md:w-auto" asChild>
               <Link href="/cars">
                 Смотреть автомобили
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600">
+            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600 w-full md:w-auto">
               Каталог запчастей
-            </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600" asChild>
-              <Link href="/login">
-                Панель управления
-              </Link>
-            </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600" asChild>
-              <Link href="/api-test">
-                Тест API
-              </Link>
             </Button>
           </div>
         </div>
       </section>
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Filters */}
-        <CarFilters onFiltersChange={handleFiltersChange} />
+      <main className="flex-1 bg-gray-50">
+        <div className="container mx-auto px-4 py-6 md:py-8">
+          {/* Filters */}
+          <CarFilters onFiltersChange={handleFiltersChange} />
 
-        {/* New Arrivals */}
-        <section className="mt-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold">Новые поступления</h2>
-            <div className="flex gap-2">
-              <Button onClick={fetchCars} variant="outline" disabled={loading}>
-                <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                Обновить
-              </Button>
-              <Button variant="outline" asChild>
-                <Link href="/cars">
-                  Смотреть все
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
+          {/* New Arrivals */}
+          <section className="mt-6 md:mt-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 md:mb-6 gap-4">
+              <h2 className="text-xl md:text-2xl font-bold">Новые поступления</h2>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button onClick={fetchCars} variant="outline" disabled={loading} className="w-full sm:w-auto">
+                  <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                  Обновить
+                </Button>
+                <Button variant="outline" asChild className="w-full sm:w-auto">
+                  <Link href="/cars">
+                    Смотреть все
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
             </div>
-          </div>
 
-          {loading ? (
-            <div className="flex items-center justify-center h-64">
-              <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
-              <span className="ml-2">Загрузка автомобилей...</span>
-            </div>
-          ) : filteredCars.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-gray-500 mb-4">Автомобили не найдены</p>
-              <Button onClick={fetchCars} variant="outline">
-                Попробовать снова
-              </Button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredCars.slice(0, 8).map((car) => (
-                <CarCard key={car.id} car={car} />
-              ))}
-            </div>
-          )}
-        </section>
-      </div>
+            {loading ? (
+              <div className="flex items-center justify-center h-48 md:h-64">
+                <RefreshCw className="h-6 w-6 md:h-8 md:w-8 animate-spin text-blue-600" />
+                <span className="ml-2 text-sm md:text-base">Загрузка автомобилей...</span>
+              </div>
+            ) : filteredCars.length === 0 ? (
+              <div className="text-center py-8 md:py-12">
+                <p className="text-gray-500 mb-4">Автомобили не найдены</p>
+                <Button onClick={fetchCars} variant="outline">
+                  Попробовать снова
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+                {filteredCars.slice(0, 8).map((car) => (
+                  <CarCard key={car.id} car={car} />
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
+      </main>
+      
       <Footer />
-    </div>
+    </>
   )
 }
