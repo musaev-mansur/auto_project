@@ -5,12 +5,14 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent } from '@/components/ui/card'
+import { ChevronDown, ChevronUp, Filter } from 'lucide-react'
 
 interface CarFiltersProps {
   onFiltersChange: (filters: any) => void
 }
 
 export function CarFilters({ onFiltersChange }: CarFiltersProps) {
+  const [isOpen, setIsOpen] = useState(false)
   const [filters, setFilters] = useState({
     brand: 'all',
     priceFrom: '',
@@ -41,11 +43,38 @@ export function CarFilters({ onFiltersChange }: CarFiltersProps) {
     onFiltersChange(emptyFilters)
   }
 
+  const hasActiveFilters = filters.brand !== 'all' || filters.priceFrom || filters.priceTo || 
+    filters.mileageFrom || filters.mileageTo || filters.yearFrom || filters.yearTo
+
   return (
     <Card>
       <CardContent className="p-4 sm:p-6">
-        <h3 className="text-base sm:text-lg font-semibold mb-4">Фильтры</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        {/* Мобильная кнопка toggle */}
+        <div className="sm:hidden">
+          <Button
+            variant="outline"
+            onClick={() => setIsOpen(!isOpen)}
+            className="w-full flex items-center justify-between"
+          >
+            <div className="flex items-center">
+              <Filter className="h-4 w-4 mr-2" />
+              Фильтры
+              {hasActiveFilters && (
+                <span className="ml-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
+                  {Object.values(filters).filter(v => v && v !== 'all').length}
+                </span>
+              )}
+            </div>
+            {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </Button>
+        </div>
+
+        {/* Десктопный заголовок */}
+        <h3 className="hidden sm:block text-base sm:text-lg font-semibold mb-4">Фильтры</h3>
+        
+        {/* Контент фильтров - скрытый на мобильных, если не открыт */}
+        <div className={`${isOpen ? 'block' : 'hidden'} sm:block mt-4 sm:mt-0`}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <div>
             <label className="block text-sm font-medium mb-2">Марка</label>
             <Input
@@ -111,10 +140,11 @@ export function CarFilters({ onFiltersChange }: CarFiltersProps) {
           </div>
         </div>
 
-        <div className="flex justify-center sm:justify-end mt-4">
-          <Button variant="outline" onClick={resetFilters} className="w-full sm:w-auto">
-            Сбросить фильтры
-          </Button>
+          <div className="flex justify-center sm:justify-end mt-4">
+            <Button variant="outline" onClick={resetFilters} className="w-full sm:w-auto">
+              Сбросить фильтры
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
