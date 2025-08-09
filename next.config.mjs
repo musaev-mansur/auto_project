@@ -23,9 +23,6 @@ const nextConfig = {
   },
   // Настройки для production
   output: 'standalone',
-  experimental: {
-    outputFileTracingRoot: undefined,
-  },
 }
 
 export default nextConfig
