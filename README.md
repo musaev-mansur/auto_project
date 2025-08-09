@@ -1,122 +1,180 @@
-# Auto Project - База данных
+# AutoDealer - Car Management System
 
-Простая база данных для хранения автомобилей и управления админами с CRUD операциями.
+A modern car dealership platform with multilingual support (RU/EN) and comprehensive car management features.
 
-## Структура базы данных
+## 🌐 Live Demo
 
-### Модели
+**[View Live Project](https://autoproject-xi78.onrender.com/)**
 
-#### Admin (Администратор)
-- `id` - уникальный идентификатор
-- `email` - email админа (уникальный)
-- `password` - хешированный пароль
-- `name` - имя админа
-- `role` - роль (по умолчанию "admin")
-- `createdAt` - дата создания
-- `updatedAt` - дата обновления
+![AutoDealer Preview](./preview.gif)
 
-#### Car (Автомобиль)
-- `id` - уникальный идентификатор
-- `brand` - марка автомобиля
-- `model` - модель
-- `generation` - поколение (опционально)
-- `year` - год выпуска
-- `mileage` - пробег
-- `transmission` - тип трансмиссии
-- `fuel` - тип топлива
-- `drive` - тип привода
-- `bodyType` - тип кузова
-- `color` - цвет
-- `power` - мощность двигателя
-- `engineVolume` - объем двигателя
-- `euroStandard` - экологический стандарт
-- `vin` - VIN номер (уникальный)
-- `condition` - состояние
-- `customs` - растаможен
-- `vat` - НДС
-- `owners` - количество владельцев
-- `price` - цена
-- `currency` - валюта
-- `negotiable` - торг
-- `city` - город
-- `description` - описание
-- `photos` - фотографии (JSON строка)
-- `status` - статус (draft/published/sold)
-- `views` - количество просмотров
-- `createdAt` - дата создания
-- `updatedAt` - дата обновления
-- `adminId` - ID админа, создавшего автомобиль
+> *Note: Add your project preview GIF to the repository root as `preview.gif`*
 
-## API Endpoints
+## 🚀 Features
 
-### Аутентификация
-- `POST /api/auth/register` - регистрация админа
-- `POST /api/auth/login` - вход админа
+- 🌍 **Multilingual Support** - Russian/English localization
+- 🚗 **Car Management** - Full CRUD operations for vehicles
+- 👨‍💼 **Admin Panel** - Dealer dashboard with comprehensive controls
+- 🔍 **Advanced Filtering** - Search by brand, price, year, mileage
+- 📱 **Responsive Design** - Mobile-first approach with modern UI
+- 🖼️ **Image Gallery** - Multiple photo upload and display
+- 📊 **Analytics** - View tracking and car statistics
+- 🔐 **Authentication** - Secure admin login system
+- 💼 **Professional Layout** - Clean, modern interface
 
-### Автомобили
-- `GET /api/cars` - получить все автомобили (с пагинацией и фильтрами)
-- `POST /api/cars` - создать новый автомобиль
-- `GET /api/cars/[id]` - получить конкретный автомобиль
-- `PUT /api/cars/[id]` - обновить автомобиль
-- `DELETE /api/cars/[id]` - удалить автомобиль
+## 📱 Screenshots
 
-### Админы
-- `GET /api/admins` - получить всех админов (с пагинацией)
+### Public Car Catalog
+- Browse available cars with advanced filters
+- Multilingual interface (RU/EN)
+- Mobile-responsive design
 
-## Установка и настройка
+### Car Details Page
+- Comprehensive car information
+- Image gallery with multiple photos
+- Contact forms for inquiries
 
-1. Установите зависимости:
+### Dealer Dashboard
+- Add/edit/delete cars
+- Status management (draft/published/sold)
+- Admin quick actions
+
+## 🗄️ Database Structure
+
+### Models
+
+#### Admin
+- `id` - Unique identifier
+- `email` - Admin email (unique)
+- `password` - Hashed password
+- `name` - Admin name
+- `role` - Role (default: "admin")
+- `createdAt` - Creation date
+- `updatedAt` - Update date
+
+#### Car
+- `id` - Unique identifier
+- `brand` - Car brand
+- `model` - Car model
+- `generation` - Generation (optional)
+- `year` - Manufacturing year
+- `mileage` - Mileage in km
+- `transmission` - Transmission type
+- `fuel` - Fuel type
+- `drive` - Drive type
+- `bodyType` - Body type
+- `color` - Color
+- `power` - Engine power (hp)
+- `engineVolume` - Engine volume (L)
+- `euroStandard` - Euro standard
+- `vin` - VIN number (unique)
+- `condition` - Condition
+- `customs` - Customs cleared
+- `vat` - VAT included
+- `owners` - Number of owners
+- `price` - Price
+- `currency` - Currency
+- `negotiable` - Negotiable price
+- `city` - City location
+- `description` - Description
+- `photos` - Photos (JSON array)
+- `status` - Status (draft/published/sold)
+- `views` - View count
+- `createdAt` - Creation date
+- `updatedAt` - Update date
+- `adminId` - Creator admin ID
+
+## 🔌 API Endpoints
+
+### Authentication
+- `POST /api/auth/register` - Register admin
+- `POST /api/auth/login` - Admin login
+
+### Cars
+- `GET /api/cars` - Get all cars (with pagination and filters)
+- `POST /api/cars` - Create new car
+- `GET /api/cars/[id]` - Get specific car
+- `PUT /api/cars/[id]` - Update car
+- `DELETE /api/cars/[id]` - Delete car
+
+### Admins
+- `GET /api/admins` - Get all admins (with pagination)
+
+### File Upload
+- `POST /api/upload` - Upload car images
+- `GET /api/files/[filename]` - Serve uploaded files
+
+## 🛠️ Installation & Setup
+
+1. **Clone the repository:**
+```bash
+git clone <repository-url>
+cd auto_project
+```
+
+2. **Install dependencies:**
 ```bash
 npm install
+# or
+pnpm install
 ```
 
-2. Создайте файл `.env` с настройками базы данных:
-```
+3. **Set up environment variables:**
+Create a `.env` file in the root directory:
+```env
 DATABASE_URL="file:./dev.db"
+NEXTAUTH_SECRET="your-secret-key"
+RENDER="false"
 ```
 
-3. Создайте и примените миграции:
+4. **Set up the database:**
 ```bash
 npx prisma migrate dev
+npx prisma generate
 ```
 
-4. Заполните базу данных тестовыми данными:
+5. **Seed the database with sample data:**
 ```bash
 npm run db:seed
 ```
 
-5. Запустите сервер разработки:
+6. **Start the development server:**
 ```bash
 npm run dev
 ```
 
-## Тестовые данные
+7. **Open your browser:**
+Navigate to [http://localhost:3000](http://localhost:3000)
 
-После запуска `npm run db:seed` создается:
+## 🧪 Test Data
 
-### Админ
-- Email:
-- Пароль:
+After running `npm run db:seed`, the following test data is created:
 
-### Автомобили
-- BMW X5 2018 года
-- Mercedes-Benz C-Class 2019 года
-- Audi A4 2020 года
+### Admin Account
+- **Email:** `admin@example.com`
+- **Password:** `admin123`
 
-## Использование API
+### Sample Cars
+- **BMW X5** (2018) - Luxury SUV with premium features
+- **Mercedes-Benz C-Class** (2019) - Executive sedan
+- **Audi A4** (2020) - Modern business car
 
-### Регистрация админа
+> Use the admin credentials to access the dealer dashboard at `/dealer`
+
+## 📚 API Usage Examples
+
+### Register Admin
 ```bash
 curl -X POST http://localhost:3000/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "email": "newadmin@example.com",
     "password": "password123",
-    "name": "Новый Админ"
+    "name": "New Admin"
   }'
 ```
 
-### Вход админа
+### Admin Login
 ```bash
 curl -X POST http://localhost:3000/api/auth/login \
   -H "Content-Type: application/json" \
@@ -126,12 +184,19 @@ curl -X POST http://localhost:3000/api/auth/login \
   }'
 ```
 
-### Получение автомобилей
+### Get Cars with Filters
 ```bash
-curl http://localhost:3000/api/cars?page=1&limit=10&status=published
+# Get published cars with pagination
+curl "http://localhost:3000/api/cars?page=1&limit=10&status=published"
+
+# Get cars by brand
+curl "http://localhost:3000/api/cars?brand=BMW"
+
+# Get cars with price range
+curl "http://localhost:3000/api/cars?priceFrom=20000&priceTo=50000"
 ```
 
-### Создание автомобиля
+### Create New Car
 ```bash
 curl -X POST http://localhost:3000/api/cars \
   -H "Content-Type: application/json" \
@@ -144,7 +209,7 @@ curl -X POST http://localhost:3000/api/cars \
     "fuel": "petrol",
     "drive": "front",
     "bodyType": "sedan",
-    "color": "Серебристый",
+    "color": "Silver",
     "power": 200,
     "engineVolume": 2.5,
     "euroStandard": "Euro 6",
@@ -156,18 +221,56 @@ curl -X POST http://localhost:3000/api/cars \
     "price": 35000,
     "currency": "EUR",
     "negotiable": true,
-    "city": "Москва",
-    "description": "Отличное состояние",
+    "city": "Moscow",
+    "description": "Excellent condition",
     "photos": ["/placeholder.jpg"],
-    "adminId": "admin-id-here"
+    "status": "published"
   }'
 ```
 
-## Технологии
+## 🛠️ Tech Stack
 
-- **Next.js 15** - React фреймворк
-- **Prisma** - ORM для работы с базой данных
-- **SQLite** - локальная база данных
-- **bcryptjs** - хеширование паролей
-- **TypeScript** - типизация
-- **next-themes** - управление темами
+### Frontend
+- **Next.js 15** - React framework with App Router
+- **TypeScript** - Type safety and better DX
+- **Tailwind CSS** - Utility-first CSS framework
+- **shadcn/ui** - Modern UI components
+- **Lucide React** - Beautiful icons
+
+### Backend
+- **Next.js API Routes** - Full-stack framework
+- **Prisma** - Type-safe ORM
+- **SQLite** - Local database (PostgreSQL in production)
+- **bcryptjs** - Password hashing
+
+### Features
+- **Multilingual Support** - i18n with React Context
+- **Image Upload** - File handling and storage
+- **Responsive Design** - Mobile-first approach
+- **Form Validation** - Client and server-side validation
+
+### Deployment
+- **Render** - Cloud hosting platform
+- **PostgreSQL** - Production database
+- **Static File Serving** - Optimized image delivery
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 📞 Contact
+
+- **Live Demo:** [https://autoproject-xi78.onrender.com/](https://autoproject-xi78.onrender.com/)
+- **Admin Panel:** [https://autoproject-xi78.onrender.com/dealer](https://autoproject-xi78.onrender.com/dealer)
+
+---
+
+**Made with ❤️ using Next.js and modern web technologies**

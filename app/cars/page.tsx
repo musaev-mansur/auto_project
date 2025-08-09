@@ -14,6 +14,7 @@ import { Car as CarType } from '@/types'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 import { useAuth } from '@/contexts/auth-context'
+import { useLocale } from '@/contexts/locale-context'
 import { getFuelText, getTransmissionText, getStatusText } from '@/lib/translations'
 
 // Функция для преобразования данных из API в формат Car
@@ -53,6 +54,7 @@ function transformCarFromAPI(carData: any): CarType {
 
 export default function CarsPage() {
   const { isAuthenticated } = useAuth()
+  const { t, locale } = useLocale()
   const [cars, setCars] = useState<CarType[]>([])
   const [filteredCars, setFilteredCars] = useState<CarType[]>([])
   const [loading, setLoading] = useState(true)
@@ -199,7 +201,7 @@ export default function CarsPage() {
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center h-64">
             <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
-            <span className="ml-2">Загрузка автомобилей...</span>
+            <span className="ml-2">{t('cars.loading')}</span>
           </div>
         </div>
         <Footer />
@@ -223,22 +225,22 @@ export default function CarsPage() {
           </Button>
           <div className="flex items-center gap-2 sm:gap-4">
             <Car className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
-            <h1 className="text-xl sm:text-3xl font-bold">Автомобили</h1>
+            <h1 className="text-xl sm:text-3xl font-bold">{t('cars.title')}</h1>
           </div>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
           <Button onClick={fetchCars} variant="outline" size="sm" className="text-xs sm:text-sm w-full sm:w-auto">
             <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-            Обновить
+            {t('home.refresh')}
           </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
+                    <Button
+            variant="outline"
+            size="sm"
             className="text-xs sm:text-sm w-full sm:w-auto"
             onClick={() => setShowFilters(!showFilters)}
           >
             <Filter className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-            Фильтры
+            {t('filters.title')}
           </Button>
         </div>
       </div>
@@ -258,7 +260,7 @@ export default function CarsPage() {
             <Card>
               <CardHeader className="pb-3 sm:pb-6">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-base sm:text-lg">Фильтры</CardTitle>
+                  <CardTitle className="text-base sm:text-lg">{t('filters.title')}</CardTitle>
                   <Button 
                     variant="ghost" 
                     size="sm" 
@@ -271,9 +273,9 @@ export default function CarsPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label className="text-sm">Марка</Label>
+                  <Label className="text-sm">{t('filters.brand')}</Label>
                   <Input
-                    placeholder="Введите марку"
+                    placeholder={t('filters.brandPlaceholder')}
                     value={filters.brand}
                     onChange={(e) => handleFilterChange('brand', e.target.value)}
                     className="text-sm"
@@ -282,7 +284,7 @@ export default function CarsPage() {
 
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <Label className="text-sm">Цена от</Label>
+                    <Label className="text-sm">{t('filters.from')} (EUR)</Label>
                     <Input
                       placeholder="0"
                       type="number"
@@ -292,7 +294,7 @@ export default function CarsPage() {
                     />
                   </div>
                   <div>
-                    <Label className="text-sm">Цена до</Label>
+                    <Label className="text-sm">{t('filters.to')} (EUR)</Label>
                     <Input
                       placeholder="100000"
                       type="number"
@@ -305,7 +307,7 @@ export default function CarsPage() {
 
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <Label className="text-sm">Год от</Label>
+                    <Label className="text-sm">{t('filters.year')} {t('filters.from')}</Label>
                     <Input
                       placeholder="2000"
                       type="number"
@@ -315,7 +317,7 @@ export default function CarsPage() {
                     />
                   </div>
                   <div>
-                    <Label className="text-sm">Год до</Label>
+                    <Label className="text-sm">{t('filters.year')} {t('filters.to')}</Label>
                     <Input
                       placeholder="2024"
                       type="number"
@@ -327,10 +329,10 @@ export default function CarsPage() {
                 </div>
 
                 <div>
-                  <Label className="text-sm">Коробка передач</Label>
+                  <Label className="text-sm">{locale === 'ru' ? 'Коробка передач' : 'Transmission'}</Label>
                   <Select value={filters.transmission} onValueChange={(value) => handleFilterChange('transmission', value)}>
                     <SelectTrigger className="text-sm">
-                      <SelectValue placeholder="Все" />
+                      <SelectValue placeholder={locale === 'ru' ? 'Все' : 'All'} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Все</SelectItem>
@@ -344,10 +346,10 @@ export default function CarsPage() {
                 </div>
 
                 <div>
-                  <Label className="text-sm">Топливо</Label>
+                  <Label className="text-sm">{locale === 'ru' ? 'Топливо' : 'Fuel'}</Label>
                   <Select value={filters.fuel} onValueChange={(value) => handleFilterChange('fuel', value)}>
                     <SelectTrigger className="text-sm">
-                      <SelectValue placeholder="Все" />
+                      <SelectValue placeholder={locale === 'ru' ? 'Все' : 'All'} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Все</SelectItem>
@@ -361,10 +363,10 @@ export default function CarsPage() {
                 </div>
 
                 <div>
-                  <Label className="text-sm">Статус</Label>
+                  <Label className="text-sm">{locale === 'ru' ? 'Статус' : 'Status'}</Label>
                   <Select value={filters.status} onValueChange={(value) => handleFilterChange('status', value)}>
                     <SelectTrigger className="text-sm">
-                      <SelectValue placeholder="Все" />
+                      <SelectValue placeholder={locale === 'ru' ? 'Все' : 'All'} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Все</SelectItem>
@@ -380,9 +382,9 @@ export default function CarsPage() {
                 </div>
 
                 <div>
-                  <Label className="text-sm">Город</Label>
+                  <Label className="text-sm">{locale === 'ru' ? 'Город' : 'City'}</Label>
                   <Input
-                    placeholder="Введите город"
+                    placeholder={locale === 'ru' ? 'Введите город' : 'Enter city'}
                     value={filters.city}
                     onChange={(e) => handleFilterChange('city', e.target.value)}
                     className="text-sm"
@@ -394,7 +396,7 @@ export default function CarsPage() {
                   onClick={resetFilters} 
                   className="w-full text-sm"
                 >
-                  Сбросить фильтры
+                  {t('filters.reset')}
                 </Button>
               </CardContent>
             </Card>
@@ -409,12 +411,12 @@ export default function CarsPage() {
                 <div className="text-center py-8">
                   <Car className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-gray-600 mb-2">
-                    {cars.length === 0 ? 'Автомобили не найдены' : 'По фильтрам ничего не найдено'}
+                    {cars.length === 0 ? t('cars.noCars') : (locale === 'ru' ? 'По фильтрам ничего не найдено' : 'No cars match the filters')}
                   </h3>
                   <p className="text-gray-500 mb-4">
                     {cars.length === 0 
-                      ? 'В базе данных пока нет автомобилей'
-                      : 'Попробуйте изменить параметры фильтрации'
+                      ? t('cars.noCars')
+                      : (locale === 'ru' ? 'Попробуйте изменить параметры фильтрации' : 'Try changing filter parameters')
                     }
                   </p>
                   {cars.length === 0 && (
@@ -440,11 +442,7 @@ export default function CarsPage() {
                       fill
                       className="object-cover rounded-t-lg"
                     />
-                    {car.negotiable && (
-                      <Badge className="absolute top-2 right-2 bg-green-600 text-xs">
-                        Торг
-                      </Badge>
-                    )}
+                    {car.negotiable && <Badge className="absolute top-2 right-2 bg-green-600 text-xs">{t('car.negotiable')}</Badge>}
                     <Badge className={`absolute top-2 left-2 ${getStatusColor(car.status)} text-xs`}>
                       {car.status === 'published' ? 'Опубликован' : 
                        car.status === 'draft' ? 'Черновик' : 
@@ -456,49 +454,49 @@ export default function CarsPage() {
                     <CardTitle className="text-base sm:text-lg line-clamp-2">
                       {car.brand} {car.model} {car.generation}
                     </CardTitle>
-                    <p className="text-sm text-gray-600">{car.year} год</p>
+                    <p className="text-sm text-gray-600">{car.year} {t('car.year')}</p>
                   </CardHeader>
 
                                      <CardContent className="pt-0">
                      <div className="space-y-2">
                        <div className="flex justify-between text-sm">
-                         <span className="text-gray-600">Цена:</span>
+                         <span className="text-gray-600">{locale === 'ru' ? 'Цена:' : 'Price:'}</span>
                          <span className="font-semibold text-blue-600">{formatPrice(car.price, car.currency)}</span>
                        </div>
                        <div className="flex justify-between text-sm">
-                         <span className="text-gray-600">Пробег:</span>
-                         <span>{new Intl.NumberFormat('ru-RU').format(car.mileage)} км</span>
+                         <span className="text-gray-600">{locale === 'ru' ? 'Пробег:' : 'Mileage:'}</span>
+                         <span>{new Intl.NumberFormat('ru-RU').format(car.mileage)} {t('car.km')}</span>
                        </div>
                        <div className="flex justify-between text-sm">
-                         <span className="text-gray-600">Мощность:</span>
-                         <span>{car.power} л.с.</span>
+                         <span className="text-gray-600">{locale === 'ru' ? 'Мощность:' : 'Power:'}</span>
+                         <span>{car.power} {t('car.hp')}</span>
                        </div>
                        <div className="flex justify-between text-sm">
-                         <span className="text-gray-600">Объем:</span>
-                         <span>{car.engineVolume} л</span>
+                         <span className="text-gray-600">{locale === 'ru' ? 'Объем:' : 'Volume:'}</span>
+                         <span>{car.engineVolume} {locale === 'ru' ? 'л' : 'L'}</span>
                        </div>
                        <div className="flex justify-between text-sm">
-                         <span className="text-gray-600">Цвет:</span>
+                         <span className="text-gray-600">{locale === 'ru' ? 'Цвет:' : 'Color:'}</span>
                          <span>{car.color}</span>
                        </div>
                        <div className="flex justify-between text-sm">
-                         <span className="text-gray-600">Коробка:</span>
-                         <span>{getTransmissionText(car.transmission)}</span>
+                         <span className="text-gray-600">{locale === 'ru' ? 'Коробка:' : 'Transmission:'}</span>
+                         <span>{getTransmissionText(car.transmission, locale)}</span>
                        </div>
                        <div className="flex justify-between text-sm">
-                         <span className="text-gray-600">Топливо:</span>
-                         <span>{getFuelText(car.fuel)}</span>
+                         <span className="text-gray-600">{locale === 'ru' ? 'Топливо:' : 'Fuel:'}</span>
+                         <span>{getFuelText(car.fuel, locale)}</span>
                        </div>
                        <div className="flex justify-between text-sm">
-                         <span className="text-gray-600">Евро:</span>
+                         <span className="text-gray-600">{locale === 'ru' ? 'Евро:' : 'Euro:'}</span>
                          <span>{car.euroStandard}</span>
                        </div>
                        <div className="flex justify-between text-sm">
-                         <span className="text-gray-600">Владельцев:</span>
+                         <span className="text-gray-600">{locale === 'ru' ? 'Владельцев:' : 'Owners:'}</span>
                          <span>{car.owners}</span>
                        </div>
                        <div className="flex justify-between text-sm">
-                         <span className="text-gray-600">Просмотры:</span>
+                         <span className="text-gray-600">{locale === 'ru' ? 'Просмотры:' : 'Views:'}</span>
                          <span>{car.views}</span>
                        </div>
                      </div>
@@ -507,7 +505,7 @@ export default function CarsPage() {
                       <div className="flex gap-2">
                         <Button variant="outline" className="flex-1 text-sm" asChild>
                           <Link href={`/cars/${car.id}`}>
-                            Подробнее
+                            {t('car.details')}
                           </Link>
                         </Button>
                         {isAuthenticated && (
@@ -526,7 +524,7 @@ export default function CarsPage() {
           )}
 
           <div className="mt-6 sm:mt-8 text-center text-sm text-gray-500">
-            Показано: {filteredCars.length} из {cars.length} автомобилей
+{locale === 'ru' ? `Показано: ${filteredCars.length} из ${cars.length} автомобилей` : `Shown: ${filteredCars.length} of ${cars.length} cars`}
           </div>
         </div>
       </div>

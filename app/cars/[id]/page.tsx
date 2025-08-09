@@ -16,6 +16,7 @@ import { ImageGallery } from '@/components/image-gallery'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 import { useAuth } from '@/contexts/auth-context'
+import { useLocale } from '@/contexts/locale-context'
 import { getFuelText, getTransmissionText, getDriveText, getBodyTypeText, getConditionText } from '@/lib/translations'
 
 // API → Car
@@ -56,6 +57,7 @@ function transformCarFromAPI(carData: any): Car {
 export default function CarDetailPage() {
   const params = useParams()
   const { isAuthenticated } = useAuth()
+  const { t, locale } = useLocale()
   const [car, setCar] = useState<Car | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -67,13 +69,13 @@ export default function CarDetailPage() {
       try {
         const response = await fetch(`/api/cars/${params.id}`)
         if (!response.ok) {
-          throw new Error(response.status === 404 ? 'Автомобиль не найден' : `Ошибка: ${response.status}`)
+          throw new Error(response.status === 404 ? (locale === 'ru' ? 'Автомобиль не найден' : 'Car not found') : `${locale === 'ru' ? 'Ошибка' : 'Error'}: ${response.status}`)
         }
         const data = await response.json()
         setCar(transformCarFromAPI(data))
         setError('')
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Неизвестная ошибка')
+        setError(err instanceof Error ? err.message : (locale === 'ru' ? 'Неизвестная ошибка' : 'Unknown error'))
       }
       setLoading(false)
     }
@@ -87,11 +89,11 @@ export default function CarDetailPage() {
 
   const ContactForm = ({ type }: { type: 'question' | 'viewing' }) => (
     <div className="space-y-4">
-      <Input placeholder="Ваше имя" />
-      <Input placeholder="Телефон" />
-      <Input placeholder="Email (необязательно)" />
-      <Textarea placeholder={type === 'question' ? 'Ваш вопрос' : 'Удобное время для показа'} rows={3} />
-      <Button className="w-full">{type === 'question' ? 'Отправить вопрос' : 'Записаться на показ'}</Button>
+      <Input placeholder={locale === 'ru' ? 'Ваше имя' : 'Your name'} />
+      <Input placeholder={locale === 'ru' ? 'Телефон' : 'Phone'} />
+      <Input placeholder={locale === 'ru' ? 'Email (необязательно)' : 'Email (optional)'} />
+      <Textarea placeholder={type === 'question' ? (locale === 'ru' ? 'Ваш вопрос' : 'Your question') : (locale === 'ru' ? 'Удобное время для показа' : 'Convenient viewing time')} rows={3} />
+      <Button className="w-full">{type === 'question' ? (locale === 'ru' ? 'Отправить вопрос' : 'Send question') : (locale === 'ru' ? 'Записаться на показ' : 'Schedule viewing')}</Button>
     </div>
   )
 
@@ -99,16 +101,16 @@ export default function CarDetailPage() {
     <div className="container mx-auto px-4 py-8 text-center">
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-2">Загрузка...</span>
+        <span className="ml-2">{locale === 'ru' ? 'Загрузка...' : 'Loading...'}</span>
       </div>
     </div>
   )
   
   if (error || !car) return (
     <div className="container mx-auto px-4 py-8 text-center">
-      <div className="text-red-500">{error || 'Автомобиль не найден'}</div>
+      <div className="text-red-500">{error || (locale === 'ru' ? 'Автомобиль не найден' : 'Car not found')}</div>
       <Button asChild className="mt-4">
-        <Link href="/cars">Вернуться к списку</Link>
+        <Link href="/cars">{t('carDetail.backToList')}</Link>
       </Button>
     </div>
   )
@@ -122,7 +124,7 @@ export default function CarDetailPage() {
           <Button variant="outline" asChild size="sm" className="text-xs sm:text-sm">
             <Link href="/cars">
               <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" /> 
-              Назад к списку
+              {t('carDetail.backToList')}
             </Link>
           </Button>
         </div>
@@ -146,7 +148,7 @@ export default function CarDetailPage() {
                 <CardTitle className="text-lg sm:text-xl lg:text-2xl leading-tight">
                   {car.brand} {car.model} {car.generation}
                 </CardTitle>
-                {car.negotiable && <Badge className="bg-green-600 text-xs flex-shrink-0">Торг</Badge>}
+                {car.negotiable && <Badge className="bg-green-600 text-xs flex-shrink-0">{t('car.negotiable')}</Badge>}
               </div>
               <div className="text-2xl sm:text-3xl font-bold text-blue-600">
                 {formatPrice(car.price, car.currency)}
@@ -165,11 +167,11 @@ export default function CarDetailPage() {
                 </div>
                 <div className="flex items-center">
                   <Fuel className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" /> 
-                  {getFuelText(car.fuel)}
+                  {getFuelText(car.fuel, locale)}
                 </div>
                 <div className="flex items-center">
                   <Settings className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" /> 
-                  {getTransmissionText(car.transmission)}
+                  {getTransmissionText(car.transmission, locale)}
                 </div>
                 <div className="flex items-center">
                   <MapPin className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" /> 
@@ -177,56 +179,56 @@ export default function CarDetailPage() {
                 </div>
                 <div className="flex items-center">
                   <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" /> 
-                  {car.views} просмотров
+                  {car.views} {t('car.views')}
                 </div>
               </div>
 
               <div className="pt-3 sm:pt-4 border-t">
-                <h4 className="font-semibold mb-2 text-sm sm:text-base">Характеристики</h4>
+                <h4 className="font-semibold mb-2 text-sm sm:text-base">{t('carDetail.characteristics')}</h4>
                 <div className="grid grid-cols-1 gap-1 sm:gap-2 text-xs sm:text-sm">
                   <div className="flex justify-between">
-                    <span>Мощность:</span>
-                    <span>{car.power} л.с.</span>
+                    <span>{t('carDetail.power')}:</span>
+                    <span>{car.power} {t('car.hp')}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Объем двигателя:</span>
-                    <span>{car.engineVolume} л</span>
+                    <span>{t('carDetail.engineVolume')}:</span>
+                    <span>{car.engineVolume} {locale === 'ru' ? 'л' : 'L'}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Привод:</span>
-                    <span>{getDriveText(car.drive)}</span>
+                    <span>{t('carDetail.drive')}:</span>
+                    <span>{getDriveText(car.drive, locale)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Кузов:</span>
-                    <span>{getBodyTypeText(car.bodyType)}</span>
+                    <span>{t('carDetail.bodyType')}:</span>
+                    <span>{getBodyTypeText(car.bodyType, locale)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Цвет:</span>
+                    <span>{t('carDetail.color')}:</span>
                     <span>{car.color}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Экологический стандарт:</span>
+                    <span>{t('carDetail.euroStandard')}:</span>
                     <span>Евро {car.euroStandard}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>VIN:</span>
+                    <span>{t('carDetail.vin')}:</span>
                     <span className="font-mono text-xs">{car.vin}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Количество владельцев:</span>
+                    <span>{t('carDetail.owners')}:</span>
                     <span>{car.owners}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Растаможен:</span>
-                    <span>{car.customs ? 'Да' : 'Нет'}</span>
+                    <span>{t('carDetail.customs')}:</span>
+                    <span>{car.customs ? t('carDetail.yes') : t('carDetail.no')}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>НДС:</span>
-                    <span>{car.vat ? 'Да' : 'Нет'}</span>
+                    <span>{t('carDetail.vat')}:</span>
+                    <span>{car.vat ? t('carDetail.yes') : t('carDetail.no')}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Состояние:</span>
-                    <span>{getConditionText(car.condition)}</span>
+                    <span>{t('carDetail.condition')}:</span>
+                    <span>{getConditionText(car.condition, locale)}</span>
                   </div>
                 </div>
               </div>
@@ -240,7 +242,7 @@ export default function CarDetailPage() {
               <Button asChild className="w-full text-sm sm:text-base bg-orange-600 hover:bg-orange-700" size="sm">
                 <Link href={`/dealer/edit-car/${car.id}`}>
                   <Edit className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                  Редактировать
+                  {locale === 'ru' ? 'Редактировать' : 'Edit'}
                 </Link>
               </Button>
             )}
@@ -248,24 +250,24 @@ export default function CarDetailPage() {
             <Button className="w-full text-sm sm:text-base" size="sm" asChild>
               <a href="tel:+32487250651">
                 <Phone className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> 
-                Позвонить
+                {t('car.call')}
               </a>
             </Button>
             <Button className="w-full bg-green-600 hover:bg-green-700 text-sm sm:text-base" size="sm">
               <MessageCircle className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> 
-              <Link href="https://wa.me/+32487250651">WhatsApp</Link>
+              <Link href="https://wa.me/+32487250651">{t('car.whatsapp')}</Link>
             </Button>
 
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="outline" className="w-full text-sm sm:text-base" size="sm">
                   <Mail className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> 
-                  Задать вопрос
+                  {t('car.askQuestion')}
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                  <DialogTitle>Задать вопрос</DialogTitle>
+                  <DialogTitle>{t('car.askQuestion')}</DialogTitle>
                 </DialogHeader>
                 <ContactForm type="question" />
               </DialogContent>
@@ -275,12 +277,12 @@ export default function CarDetailPage() {
                 <DialogTrigger asChild>
                   <Button variant="outline" className="w-full text-sm sm:text-base" size="sm">
                     <Calendar className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> 
-                    Записаться на показ
+                    {t('car.scheduleViewing')}
                   </Button>
                 </DialogTrigger>
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                  <DialogTitle>Записаться на показ</DialogTitle>
+                  <DialogTitle>{t('car.scheduleViewing')}</DialogTitle>
                 </DialogHeader>
                 <ContactForm type="viewing" />
               </DialogContent>
@@ -293,7 +295,7 @@ export default function CarDetailPage() {
         {/* Описание */}
         {car.description && (
           <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
-            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Описание</h2>
+            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">{t('carDetail.description')}</h2>
             <p className="text-gray-700 leading-relaxed text-sm sm:text-base">
               {car.description}
             </p>

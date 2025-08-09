@@ -6,12 +6,14 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent } from '@/components/ui/card'
 import { ChevronDown, ChevronUp, Filter } from 'lucide-react'
+import { useLocale } from '@/contexts/locale-context'
 
 interface CarFiltersProps {
   onFiltersChange: (filters: any) => void
 }
 
 export function CarFilters({ onFiltersChange }: CarFiltersProps) {
+  const { t } = useLocale()
   const [isOpen, setIsOpen] = useState(false)
   const [filters, setFilters] = useState({
     brand: 'all',
@@ -58,7 +60,7 @@ export function CarFilters({ onFiltersChange }: CarFiltersProps) {
           >
             <div className="flex items-center">
               <Filter className="h-4 w-4 mr-2" />
-              Фильтры
+              {t('filters.title')}
               {hasActiveFilters && (
                 <span className="ml-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
                   {Object.values(filters).filter(v => v && v !== 'all').length}
@@ -70,15 +72,15 @@ export function CarFilters({ onFiltersChange }: CarFiltersProps) {
         </div>
 
         {/* Десктопный заголовок */}
-        <h3 className="hidden sm:block text-base sm:text-lg font-semibold mb-4">Фильтры</h3>
+        <h3 className="hidden sm:block text-base sm:text-lg font-semibold mb-4">{t('filters.title')}</h3>
         
         {/* Контент фильтров - скрытый на мобильных, если не открыт */}
         <div className={`${isOpen ? 'block' : 'hidden'} sm:block mt-4 sm:mt-0`}>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Марка</label>
+            <label className="block text-sm font-medium mb-2">{t('filters.brand')}</label>
             <Input
-              placeholder="Введите марку"
+              placeholder={t('filters.brandPlaceholder')}
               value={filters.brand === 'all' ? '' : filters.brand}
               onChange={(e) => handleFilterChange('brand', e.target.value || 'all')}
               className="text-sm"
@@ -86,16 +88,16 @@ export function CarFilters({ onFiltersChange }: CarFiltersProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Цена, EUR</label>
+            <label className="block text-sm font-medium mb-2">{t('filters.price')}</label>
             <div className="flex flex-col sm:flex-row gap-2">
               <Input
-                placeholder="От"
+                placeholder={t('filters.from')}
                 value={filters.priceFrom}
                 onChange={(e) => handleFilterChange('priceFrom', e.target.value)}
                 className="text-sm"
               />
               <Input
-                placeholder="До"
+                placeholder={t('filters.to')}
                 value={filters.priceTo}
                 onChange={(e) => handleFilterChange('priceTo', e.target.value)}
                 className="text-sm"
@@ -104,16 +106,16 @@ export function CarFilters({ onFiltersChange }: CarFiltersProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Пробег, км</label>
+            <label className="block text-sm font-medium mb-2">{t('filters.mileage')}</label>
             <div className="flex flex-col sm:flex-row gap-2">
               <Input
-                placeholder="От"
+                placeholder={t('filters.from')}
                 value={filters.mileageFrom}
                 onChange={(e) => handleFilterChange('mileageFrom', e.target.value)}
                 className="text-sm"
               />
               <Input
-                placeholder="До"
+                placeholder={t('filters.to')}
                 value={filters.mileageTo}
                 onChange={(e) => handleFilterChange('mileageTo', e.target.value)}
                 className="text-sm"
@@ -122,16 +124,16 @@ export function CarFilters({ onFiltersChange }: CarFiltersProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Год</label>
+            <label className="block text-sm font-medium mb-2">{t('filters.year')}</label>
             <div className="flex flex-col sm:flex-row gap-2">
               <Input
-                placeholder="От"
+                placeholder={t('filters.from')}
                 value={filters.yearFrom}
                 onChange={(e) => handleFilterChange('yearFrom', e.target.value)}
                 className="text-sm"
               />
               <Input
-                placeholder="До"
+                placeholder={t('filters.to')}
                 value={filters.yearTo}
                 onChange={(e) => handleFilterChange('yearTo', e.target.value)}
                 className="text-sm"
@@ -142,7 +144,7 @@ export function CarFilters({ onFiltersChange }: CarFiltersProps) {
 
           <div className="flex justify-center sm:justify-end mt-4">
             <Button variant="outline" onClick={resetFilters} className="w-full sm:w-auto">
-              Сбросить фильтры
+              {t('filters.reset')}
             </Button>
           </div>
         </div>

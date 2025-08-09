@@ -2,14 +2,20 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import { Car, Phone, MessageCircle, Menu, X } from 'lucide-react'
+import { Car, Phone, MessageCircle, Menu, X, Globe } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useLocale } from '@/contexts/locale-context'
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const { locale, setLocale, t } = useLocale()
 
   const toggleMenu = () => {
     setMenuOpen(!menuOpen)
+  }
+
+  const toggleLocale = () => {
+    setLocale(locale === 'ru' ? 'en' : 'ru')
   }
 
   return (
@@ -23,20 +29,29 @@ export function Header() {
           
           <nav className="hidden md:flex items-center space-x-6">
             <Link href="/" className="text-gray-700 hover:text-blue-600">
-              Главная
+              {locale === 'ru' ? 'Главная' : 'Home'}
             </Link>
             <Link href="/cars" className="text-gray-700 hover:text-blue-600">
-              Автомобили
+              {t('nav.cars')}
             </Link>
             <Link href="/#" className="text-gray-700 hover:text-blue-600">
-              Запчасти
+              {t('nav.parts')}
             </Link>
             <Link href="/#" className="text-gray-700 hover:text-blue-600">
-              Контакты
+              {locale === 'ru' ? 'Контакты' : 'Contacts'}
             </Link>
           </nav>
 
           <div className="hidden md:flex items-center space-x-2">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={toggleLocale}
+              className="flex items-center space-x-1 text-gray-700 hover:text-blue-600"
+            >
+              <Globe className="h-4 w-4" />
+              <span className="font-medium">{locale.toUpperCase()}</span>
+            </Button>
             <Button variant="outline" size="sm" asChild>
               <a href="tel:+32487250651">
                 <Phone className="h-4 w-4 mr-2" />
@@ -65,17 +80,26 @@ export function Header() {
         {menuOpen && (
           <nav className="md:hidden flex flex-col gap-4 pb-4">
             <Link href="/" className="text-gray-700 hover:text-blue-600">
-              Главная
+              {locale === 'ru' ? 'Главная' : 'Home'}
             </Link>
             <Link href="/cars" className="text-gray-700 hover:text-blue-600">
-              Автомобили
+              {t('nav.cars')}
             </Link>
             <Link href="/#" className="text-gray-700 hover:text-blue-600">
-              Запчасти
+              {t('nav.parts')}
             </Link>
             <Link href="/#" className="text-gray-700 hover:text-blue-600">
-              Контакты
+              {locale === 'ru' ? 'Контакты' : 'Contacts'}
             </Link>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={toggleLocale}
+              className="flex items-center space-x-2 justify-start text-gray-700 hover:text-blue-600"
+            >
+              <Globe className="h-4 w-4" />
+              <span>{locale === 'ru' ? 'English' : 'Русский'}</span>
+            </Button>
             <Button variant="outline" size="sm" className="justify-start">
               <Phone className="h-4 w-4 mr-2" />
               +32 487 25-06-51

@@ -5,18 +5,21 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Calendar, Gauge, Fuel, Settings, Camera, Zap, Droplets } from 'lucide-react'
 import { getFuelText, getTransmissionText } from '@/lib/translations'
+import { useLocale } from '@/contexts/locale-context'
 
 interface CarCardProps {
   car: Car
 }
 
 export function CarCard({ car }: CarCardProps) {
+  const { locale, t } = useLocale()
+  
   const formatPrice = (price: number, currency: string) => {
     return `${price.toLocaleString()} ${currency}`
   }
 
   const formatMileage = (mileage: number) => {
-    return `${mileage.toLocaleString()} км`
+    return `${mileage.toLocaleString()} ${t('car.km')}`
   }
 
 
@@ -43,7 +46,7 @@ export function CarCard({ car }: CarCardProps) {
           
           {car.negotiable && (
             <Badge className="absolute top-2 right-2 bg-green-600 text-xs">
-              Торг
+              {t('car.negotiable')}
             </Badge>
           )}
         </div>
@@ -68,19 +71,19 @@ export function CarCard({ car }: CarCardProps) {
             </div>
             <div className="flex items-center">
               <Zap className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-              <span className="truncate">{car.power} л.с.</span>
+              <span className="truncate">{car.power} {t('car.hp')}</span>
             </div>
             <div className="flex items-center">
               <Droplets className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-              <span className="truncate">{car.engineVolume} л</span>
+              <span className="truncate">{car.engineVolume} {locale === 'ru' ? 'л' : 'L'}</span>
             </div>
             <div className="flex items-center">
               <Fuel className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-              <span className="truncate">{getFuelText(car.fuel)}</span>
+              <span className="truncate">{getFuelText(car.fuel, locale)}</span>
             </div>
             <div className="flex items-center">
               <Settings className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-              <span className="truncate">{getTransmissionText(car.transmission)}</span>
+              <span className="truncate">{getTransmissionText(car.transmission, locale)}</span>
             </div>
           </div>
 
@@ -89,7 +92,7 @@ export function CarCard({ car }: CarCardProps) {
               {car.city}
             </div>
             <div className="text-xs text-gray-400">
-              Евро {car.euroStandard}
+              {locale === 'ru' ? 'Евро' : 'Euro'} {car.euroStandard}
             </div>
           </div>
         </CardContent>
