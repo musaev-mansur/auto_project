@@ -6,9 +6,7 @@ A modern car dealership platform with multilingual support (RU/EN) and comprehen
 
 **[View Live Project](https://autoproject-xi78.onrender.com/)**
 
-![AutoDealer Preview](./preview.gif)
-
-> *Note: Add your project preview GIF to the repository root as `preview.gif`*
+![AutoDealer Preview](./auto.gif)
 
 ## 🚀 Features
 
