@@ -95,8 +95,8 @@ npm run dev
 После запуска `npm run db:seed` создается:
 
 ### Админ
-- Email: `admin@example.com`
-- Пароль: `admin123`
+- Email:
+- Пароль:
 
 ### Автомобили
 - BMW X5 2018 года

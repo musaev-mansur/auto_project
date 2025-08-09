@@ -145,16 +145,6 @@ export default function LoginPage() {
             </form>
 
             <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600">
-                Тестовые данные для входа:
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                Email: admin@example.com<br />
-                Пароль: admin123
-              </p>
-            </div>
-
-            <div className="mt-6 text-center">
               <Link 
                 href="/" 
                 className="text-sm text-blue-600 hover:text-blue-500"

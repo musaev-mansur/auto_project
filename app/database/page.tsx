@@ -122,8 +122,8 @@ export default function DatabasePage() {
             <div className="space-y-2">
               <h4 className="font-semibold">Аутентификация</h4>
               <div className="text-sm space-y-1">
-                <p>Email: admin@example.com</p>
-                <p>Пароль: admin123</p>
+                <p>Email:</p>
+                <p>Пароль:</p>
               </div>
             </div>
             <div className="space-y-2">

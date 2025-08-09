@@ -119,7 +119,7 @@ export default function HomePage() {
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600 w-full md:w-auto">
+            <Button size="lg" variant="outline" className="bg-white text-blue-600 hover:bg-gray-100 w-full md:w-auto">
               Каталог запчастей
             </Button>
           </div>

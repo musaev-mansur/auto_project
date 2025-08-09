@@ -45,14 +45,6 @@ export default function UnauthorizedPage() {
                 </Link>
               </Button>
             </div>
-
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-              <p className="text-sm text-blue-800 font-medium mb-2">Тестовые данные для входа:</p>
-              <p className="text-xs text-blue-700">
-                Email: <code className="bg-blue-100 px-1 rounded">admin@example.com</code><br />
-                Пароль: <code className="bg-blue-100 px-1 rounded">admin123</code>
-              </p>
-            </div>
           </CardContent>
         </Card>
       </div>

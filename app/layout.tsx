@@ -24,6 +24,8 @@ export default function RootLayout({
           attribute="class"
           defaultTheme="light"
           enableSystem={false}
+          forcedTheme="light"         // ← добавь это
+          storageKey="auto-theme"     // ← и поменяй ключ, чтобы старое "dark" не подхватилось
           disableTransitionOnChange
         >
           <AuthProvider>
