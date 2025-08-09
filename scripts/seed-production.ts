@@ -19,11 +19,15 @@ async function seedProduction() {
     console.log('✅ Подключение к production базе успешно')
 
     // Создаем админа
-    const adminEmail = process.env.ADMIN_EMAIL || 'admin@example.com'
+    const adminEmail = process.env.ADMIN_EMAIL
     const adminPassword = process.env.ADMIN_PASSWORD
     
     if (!adminPassword) {
       throw new Error('⚠️ ADMIN_PASSWORD переменная окружения обязательна для безопасности!')
+    }
+
+    if (!adminEmail) {
+      throw new Error('⚠️ ADMIN_EMAIL переменная окружения обязательна для безопасности!')
     }
     
     const hashedPassword = await bcrypt.hash(adminPassword, 12)
@@ -130,15 +134,17 @@ async function seedProduction() {
     ]
 
     for (const carData of cars) {
-      const car = await prisma.car.create({
-        data: carData
+      const car = await prisma.car.upsert({
+        where: { vin: carData.vin },
+        update: {},
+        create: carData
       })
-      console.log(`🚗 Автомобиль создан: ${car.brand} ${car.model}`)
+      console.log(`🚗 Автомобиль обработан: ${car.brand} ${car.model}`)
     }
 
     console.log('🎉 Production база данных успешно заполнена!')
-    console.log('📧 Email: admin@example.com')
-    console.log('🔑 Пароль: admin123')
+    console.log(`📧 Email: ${adminEmail}`)
+    console.log('🔑 Пароль: [ваш установленный пароль]')
     
   } catch (error) {
     console.error('❌ Ошибка при заполнении базы:', error)
