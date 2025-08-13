@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, ReactNode } from 'react'
 
-type Locale = 'ru' | 'en'
+export type Locale = 'ru' | 'en' | 'nl' | 'fr'
 
 interface LocaleContextType {
   locale: Locale
@@ -171,6 +171,164 @@ const translations = {
     'carDetail.mainPhoto': 'Main',
     'carDetail.yes': 'Yes',
     'carDetail.no': 'No',
+  },
+  nl: {
+    // Header
+    'nav.cars': 'Auto\'s',
+    'nav.parts': 'Onderdelen',
+    'nav.dealer': 'Handelaar',
+    'nav.login': 'Inloggen',
+    
+    // Home page
+    'home.hero.title': 'Auto\'s en Onderdelen',
+    'home.hero.subtitle': 'Kwaliteitsauto\'s en originele onderdelen tegen de beste prijzen',
+    'home.hero.viewCars': 'Auto\'s Bekijken',
+    'home.hero.partsCatalog': 'Onderdelen Catalogus',
+    'home.newArrivals': 'Nieuwe Aankomsten',
+    'home.refresh': 'Vernieuwen',
+    'home.viewAll': 'Alles Bekijken',
+    'home.loading': 'Auto\'s laden...',
+    'home.noCars': 'Geen auto\'s gevonden',
+    'home.tryAgain': 'Opnieuw Proberen',
+    
+    // Filters
+    'filters.title': 'Filters',
+    'filters.brand': 'Merk',
+    'filters.brandPlaceholder': 'Voer merk in',
+    'filters.price': 'Prijs, EUR',
+    'filters.mileage': 'Kilometerstand, km',
+    'filters.year': 'Jaar',
+    'filters.from': 'Van',
+    'filters.to': 'Tot',
+    'filters.reset': 'Filters Resetten',
+    
+    // Cars page
+    'cars.title': 'Auto Catalogus',
+    'cars.found': 'Gevonden',
+    'cars.cars': 'auto\'s',
+    'cars.sortBy': 'Sorteren op',
+    'cars.sort.newest': 'Nieuwste eerst',
+    'cars.sort.oldest': 'Oudste eerst',
+    'cars.sort.priceAsc': 'Prijs: laag naar hoog',
+    'cars.sort.priceDesc': 'Prijs: hoog naar laag',
+    'cars.sort.mileageAsc': 'Kilometerstand: laag naar hoog',
+    'cars.sort.mileageDesc': 'Kilometerstand: hoog naar laag',
+    'cars.loading': 'Auto\'s laden...',
+    'cars.noCars': 'Geen auto\'s gevonden',
+    'cars.tryAgain': 'Opnieuw Proberen',
+    'cars.showMore': 'Meer Tonen',
+    'cars.backToCatalog': 'Terug naar Catalogus',
+    
+    // Car card
+    'car.year': 'jaar',
+    'car.km': 'km',
+    'car.hp': 'pk',
+    'car.views': 'weergaven',
+    'car.negotiable': 'Onderhandelbaar',
+    'car.details': 'Details',
+    'car.call': 'Bellen',
+    'car.whatsapp': 'WhatsApp',
+    'car.askQuestion': 'Vraag Stellen',
+    'car.scheduleViewing': 'Bezichtiging Plannen',
+    
+    // Car detail page
+    'carDetail.backToList': 'Terug naar Lijst',
+    'carDetail.characteristics': 'Kenmerken',
+    'carDetail.power': 'Vermogen',
+    'carDetail.engineVolume': 'Motorinhoud',
+    'carDetail.drive': 'Aandrijving',
+    'carDetail.bodyType': 'Carrosserie',
+    'carDetail.color': 'Kleur',
+    'carDetail.euroStandard': 'Euro Norm',
+    'carDetail.vin': 'VIN',
+    'carDetail.owners': 'Aantal Eigenaren',
+    'carDetail.customs': 'Douane Vrij',
+    'carDetail.vat': 'BTW',
+    'carDetail.condition': 'Conditie',
+    'carDetail.description': 'Beschrijving',
+    'carDetail.photos': 'Foto\'s',
+    'carDetail.mainPhoto': 'Hoofd',
+    'carDetail.yes': 'Ja',
+    'carDetail.no': 'Nee',
+  },
+  fr: {
+    // Header
+    'nav.cars': 'Voitures',
+    'nav.parts': 'Pièces',
+    'nav.dealer': 'Concessionnaire',
+    'nav.login': 'Connexion',
+    
+    // Home page
+    'home.hero.title': 'Voitures et Pièces',
+    'home.hero.subtitle': 'Voitures de qualité et pièces originales aux meilleurs prix',
+    'home.hero.viewCars': 'Voir les Voitures',
+    'home.hero.partsCatalog': 'Catalogue de Pièces',
+    'home.newArrivals': 'Nouvelles Arrivées',
+    'home.refresh': 'Actualiser',
+    'home.viewAll': 'Voir Tout',
+    'home.loading': 'Chargement des voitures...',
+    'home.noCars': 'Aucune voiture trouvée',
+    'home.tryAgain': 'Réessayer',
+    
+    // Filters
+    'filters.title': 'Filtres',
+    'filters.brand': 'Marque',
+    'filters.brandPlaceholder': 'Entrez la marque',
+    'filters.price': 'Prix, EUR',
+    'filters.mileage': 'Kilométrage, km',
+    'filters.year': 'Année',
+    'filters.from': 'De',
+    'filters.to': 'À',
+    'filters.reset': 'Réinitialiser les Filtres',
+    
+    // Cars page
+    'cars.title': 'Catalogue de Voitures',
+    'cars.found': 'Trouvé',
+    'cars.cars': 'voitures',
+    'cars.sortBy': 'Trier par',
+    'cars.sort.newest': 'Plus récent d\'abord',
+    'cars.sort.oldest': 'Plus ancien d\'abord',
+    'cars.sort.priceAsc': 'Prix: croissant',
+    'cars.sort.priceDesc': 'Prix: décroissant',
+    'cars.sort.mileageAsc': 'Kilométrage: croissant',
+    'cars.sort.mileageDesc': 'Kilométrage: décroissant',
+    'cars.loading': 'Chargement des voitures...',
+    'cars.noCars': 'Aucune voiture trouvée',
+    'cars.tryAgain': 'Réessayer',
+    'cars.showMore': 'Afficher Plus',
+    'cars.backToCatalog': 'Retour au Catalogue',
+    
+    // Car card
+    'car.year': 'année',
+    'car.km': 'km',
+    'car.hp': 'ch',
+    'car.views': 'vues',
+    'car.negotiable': 'Négociable',
+    'car.details': 'Détails',
+    'car.call': 'Appeler',
+    'car.whatsapp': 'WhatsApp',
+    'car.askQuestion': 'Poser une Question',
+    'car.scheduleViewing': 'Planifier une Visite',
+    
+    // Car detail page
+    'carDetail.backToList': 'Retour à la Liste',
+    'carDetail.characteristics': 'Caractéristiques',
+    'carDetail.power': 'Puissance',
+    'carDetail.engineVolume': 'Cylindrée',
+    'carDetail.drive': 'Transmission',
+    'carDetail.bodyType': 'Type de Carrosserie',
+    'carDetail.color': 'Couleur',
+    'carDetail.euroStandard': 'Norme Euro',
+    'carDetail.vin': 'VIN',
+    'carDetail.owners': 'Nombre de Propriétaires',
+    'carDetail.customs': 'Dédouané',
+    'carDetail.vat': 'TVA',
+    'carDetail.condition': 'État',
+    'carDetail.description': 'Description',
+    'carDetail.photos': 'Photos',
+    'carDetail.mainPhoto': 'Principal',
+    'carDetail.yes': 'Oui',
+    'carDetail.no': 'Non',
   }
 }
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -12,16 +12,17 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, ArrowRight, Save, Eye, Loader2 } from 'lucide-react'
-import { ImageUpload } from '@/components/image-upload'
-import Image from 'next/image'
+import S3ImageUpload from '@/components/s3-image-upload'
+import S3Image from '@/components/s3-image'
 
 export default function AddCarPage() {
   const router = useRouter()
-  const [currentStep, setCurrentStep] = useState(1)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [carData, setCarData] = useState({
-    // Basic info
+  const [currentStep, setCurrentStep] = React.useState(1)
+  const [loading, setLoading] = React.useState(false)
+  const [error, setError] = React.useState('')
+  const [savedCarId, setSavedCarId] = React.useState<string | null>(null)
+
+  const [carData, setCarData] = React.useState({
     brand: '',
     model: '',
     generation: '',
@@ -29,11 +30,10 @@ export default function AddCarPage() {
     mileage: '',
     transmission: '',
     fuel: '',
-    drive: 'front', // Добавляем недостающее поле
+    drive: 'front',
     color: '',
     bodyType: '',
-    
-    // Details
+
     power: '',
     engineVolume: '',
     euroStandard: '',
@@ -42,19 +42,16 @@ export default function AddCarPage() {
     customs: false,
     vat: false,
     owners: '1',
-    
-    // Media
+
     photos: [] as string[],
-    
-    // Price
+
     price: '',
     currency: 'EUR',
     negotiable: false,
-    
-    // Location & Description
+
     city: '',
     description: '',
-    status: 'draft'
+    status: 'draft',
   })
 
   const steps = [
@@ -62,57 +59,120 @@ export default function AddCarPage() {
     { id: 2, title: 'Детали', description: 'Мощность, объём, VIN, состояние' },
     { id: 3, title: 'Медиа', description: 'Загрузка фотографий' },
     { id: 4, title: 'Цена и статус', description: 'Цена, валюта, статус' },
-    { id: 5, title: 'Публикация', description: 'Предпросмотр и публикация' }
+    { id: 5, title: 'Публикация', description: 'Предпросмотр и публикация' },
   ]
 
-  const handleInputChange = (field: string, value: any) => {
-    setCarData(prev => ({ ...prev, [field]: value }))
-  }
-
-  const nextStep = () => {
-    if (currentStep < 5) {
-      setCurrentStep(currentStep + 1)
+  const handleInputChange = React.useCallback((field: string, value: any) => {
+    if (field === 'photos') {
+      const next = Array.isArray(value) ? value : []
+      setCarData((prev) => ({ ...prev, photos: next }))
+    } else {
+      setCarData((prev) => ({ ...prev, [field]: value }))
     }
-  }
+  }, [])
 
-  const prevStep = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1)
-    }
-  }
+  const handlePhotosUpdate = React.useCallback((images: string[]) => {
+    console.log('📸 handlePhotosUpdate called with:', images)
+    setCarData((prev) => ({ ...prev, photos: Array.isArray(images) ? images : [] }))
+  }, [])
+
+  const nextStep = () => setCurrentStep((s) => Math.min(5, s + 1))
+  const prevStep = () => setCurrentStep((s) => Math.max(1, s - 1))
 
   const saveCar = async (status: 'draft' | 'published') => {
+    async function commitImages(carId: string, images: string[]) {
+      try {
+        console.log('🔄 Starting commit images for carId:', carId)
+        console.log('🔄 Images to commit:', images)
+        
+        // Фильтруем только временные изображения (содержащие /temp_)
+        const tempImages = images.filter(img => img.includes('/temp_'))
+        console.log('🔄 Temp images found:', tempImages)
+        
+        if (tempImages.length === 0) {
+          console.log('🔄 No temp images to commit, returning original images')
+          return images
+        }
+
+        console.log('🔄 Sending commit request...')
+        const res = await fetch('/api/images/commit', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ carId, images: tempImages })
+        })
+        
+        console.log('🔄 Commit response status:', res.status)
+        
+        if (!res.ok) {
+          console.error('Commit images failed:', res.status, await res.text())
+          return images
+        }
+        
+        const data = await res.json()
+        console.log('🔄 Commit response data:', data)
+        
+        if (data?.success && Array.isArray(data.images)) {
+          // Заменяем временные URL на постоянные
+          const permanentImages = images.map(img => {
+            if (img.includes('/temp_')) {
+              const tempKey = img.split('/').pop()
+              const permanentImg = data.images.find((permImg: string) => permImg.includes(tempKey || '')) || img
+              console.log('🔄 Replacing temp image:', img, 'with:', permanentImg)
+              return permanentImg
+            }
+            return img
+          })
+          console.log('🔄 Final permanent images:', permanentImages)
+          setCarData(prev => ({ ...prev, photos: permanentImages }))
+          return permanentImages
+        }
+      } catch (error) {
+        console.error('Error committing images:', error)
+      }
+      return images
+    }
+
     setLoading(true)
     setError('')
 
     try {
-      // Генерируем уникальный VIN если не указан
       const finalCarData = {
         ...carData,
         status,
-        vin: carData.vin || `AUTO${Date.now()}`
+        vin: carData.vin || `AUTO${Date.now()}`,
       }
-
-      console.log('Отправляем данные автомобиля:', finalCarData)
 
       const response = await fetch('/api/cars', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(finalCarData)
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(finalCarData),
       })
-
       const data = await response.json()
 
       if (response.ok) {
-        console.log('Автомобиль успешно сохранен:', data)
+        setSavedCarId(data.car.id)
+
+        if (carData.photos.length > 0) {
+          // Коммитим временные изображения в постоянные
+          const committedImages = await commitImages(data.car.id, carData.photos)
+          
+          // Обновляем только поле photos
+          const updateResponse = await fetch(`/api/cars/${data.car.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ photos: committedImages }),
+          })
+          if (!updateResponse.ok) {
+            const updateError = await updateResponse.json().catch(() => ({}))
+            console.error('Ошибка при обновлении изображений:', updateResponse.status, updateError)
+          }
+        }
+
         router.push('/dealer')
       } else {
         setError(data.error || 'Ошибка при сохранении автомобиля')
       }
-    } catch (error) {
-      console.error('Ошибка при сохранении:', error)
+    } catch (err) {
+      console.error('Ошибка при сохранении:', err)
       setError('Ошибка при сохранении автомобиля')
     } finally {
       setLoading(false)
@@ -121,7 +181,6 @@ export default function AddCarPage() {
 
   const saveDraft = () => saveCar('draft')
   const publishCar = () => saveCar('published')
-
   const progress = (currentStep / steps.length) * 100
 
   return (
@@ -141,11 +200,7 @@ export default function AddCarPage() {
               </div>
             </div>
             <Button variant="outline" onClick={saveDraft} disabled={loading} size="sm" className="text-xs sm:text-sm w-full sm:w-auto">
-              {loading ? (
-                <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 animate-spin" />
-              ) : (
-                <Save className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-              )}
+              {loading ? <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 animate-spin" /> : <Save className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />}
               Сохранить черновик
             </Button>
           </div>
@@ -161,27 +216,19 @@ export default function AddCarPage() {
             <Progress value={progress} className="mb-3 sm:mb-4" />
             <div className="hidden sm:flex justify-between text-sm">
               {steps.map((step) => (
-                <div 
-                  key={step.id} 
-                  className={`text-center ${currentStep >= step.id ? 'text-blue-600' : 'text-gray-400'}`}
-                >
+                <div key={step.id} className={`text-center ${currentStep >= step.id ? 'text-blue-600' : 'text-gray-400'}`}>
                   <div className="font-medium">{step.title}</div>
                   <div className="text-xs">{step.description}</div>
                 </div>
               ))}
             </div>
-            {/* Мобильная версия прогресса */}
             <div className="sm:hidden text-center">
-              <div className="text-sm font-medium text-blue-600">
-                {steps[currentStep - 1].title}
-              </div>
-              <div className="text-xs text-gray-500">
-                {steps[currentStep - 1].description}
-              </div>
+              <div className="text-sm font-medium text-blue-600">{steps[currentStep - 1].title}</div>
+              <div className="text-xs text-gray-500">{steps[currentStep - 1].description}</div>
             </div>
           </div>
 
-          {/* Step Content */}
+          {/* Content */}
           <Card>
             <CardHeader className="pb-3 sm:pb-6">
               <CardTitle className="text-lg sm:text-xl">{steps[currentStep - 1].title}</CardTitle>
@@ -190,68 +237,29 @@ export default function AddCarPage() {
               {currentStep === 1 && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                   <div>
-                    <Label htmlFor="brand" className="text-sm sm:text-base">Марка *</Label>
-                    <Input
-                      id="brand"
-                      value={carData.brand}
-                      onChange={(e) => handleInputChange('brand', e.target.value)}
-                      placeholder="Например: BMW, Mercedes-Benz, Audi"
-                      className="text-sm sm:text-base"
-                    />
+                    <Label htmlFor="brand">Марка *</Label>
+                    <Input id="brand" value={carData.brand} onChange={(e) => handleInputChange('brand', e.target.value)} />
                   </div>
-
                   <div>
-                    <Label htmlFor="model" className="text-sm sm:text-base">Модель *</Label>
-                    <Input
-                      id="model"
-                      value={carData.model}
-                      onChange={(e) => handleInputChange('model', e.target.value)}
-                      placeholder="Например: X5"
-                      className="text-sm sm:text-base"
-                    />
+                    <Label htmlFor="model">Модель *</Label>
+                    <Input id="model" value={carData.model} onChange={(e) => handleInputChange('model', e.target.value)} />
                   </div>
-
                   <div>
-                    <Label htmlFor="generation" className="text-sm sm:text-base">Поколение</Label>
-                    <Input
-                      id="generation"
-                      value={carData.generation}
-                      onChange={(e) => handleInputChange('generation', e.target.value)}
-                      placeholder="Например: F15"
-                      className="text-sm sm:text-base"
-                    />
+                    <Label htmlFor="generation">Поколение</Label>
+                    <Input id="generation" value={carData.generation} onChange={(e) => handleInputChange('generation', e.target.value)} />
                   </div>
-
                   <div>
-                    <Label htmlFor="year" className="text-sm sm:text-base">Год выпуска *</Label>
-                    <Input
-                      id="year"
-                      type="number"
-                      value={carData.year}
-                      onChange={(e) => handleInputChange('year', e.target.value)}
-                      placeholder="2020"
-                      className="text-sm sm:text-base"
-                    />
+                    <Label htmlFor="year">Год выпуска *</Label>
+                    <Input id="year" type="number" value={carData.year} onChange={(e) => handleInputChange('year', e.target.value)} />
                   </div>
-
                   <div>
-                    <Label htmlFor="mileage" className="text-sm sm:text-base">Пробег, км *</Label>
-                    <Input
-                      id="mileage"
-                      type="number"
-                      value={carData.mileage}
-                      onChange={(e) => handleInputChange('mileage', e.target.value)}
-                      placeholder="50000"
-                      className="text-sm sm:text-base"
-                    />
+                    <Label htmlFor="mileage">Пробег, км *</Label>
+                    <Input id="mileage" type="number" value={carData.mileage} onChange={(e) => handleInputChange('mileage', e.target.value)} />
                   </div>
-
                   <div>
-                    <Label htmlFor="transmission" className="text-sm sm:text-base">Коробка передач *</Label>
-                    <Select value={carData.transmission || undefined} onValueChange={(value) => handleInputChange('transmission', value)}>
-                      <SelectTrigger className="text-sm sm:text-base">
-                        <SelectValue placeholder="Выберите тип" />
-                      </SelectTrigger>
+                    <Label>Коробка передач *</Label>
+                    <Select value={carData.transmission || undefined} onValueChange={(v) => handleInputChange('transmission', v)}>
+                      <SelectTrigger><SelectValue placeholder="Выберите тип" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="manual">Механическая</SelectItem>
                         <SelectItem value="automatic">Автоматическая</SelectItem>
@@ -260,13 +268,10 @@ export default function AddCarPage() {
                       </SelectContent>
                     </Select>
                   </div>
-
                   <div>
-                    <Label htmlFor="fuel" className="text-sm sm:text-base">Тип топлива *</Label>
-                    <Select value={carData.fuel || undefined} onValueChange={(value) => handleInputChange('fuel', value)}>
-                      <SelectTrigger className="text-sm sm:text-base">
-                        <SelectValue placeholder="Выберите тип" />
-                      </SelectTrigger>
+                    <Label>Тип топлива *</Label>
+                    <Select value={carData.fuel || undefined} onValueChange={(v) => handleInputChange('fuel', v)}>
+                      <SelectTrigger><SelectValue placeholder="Выберите тип" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="petrol">Бензин</SelectItem>
                         <SelectItem value="diesel">Дизель</SelectItem>
@@ -276,13 +281,10 @@ export default function AddCarPage() {
                       </SelectContent>
                     </Select>
                   </div>
-
                   <div>
-                    <Label htmlFor="drive" className="text-sm sm:text-base">Привод *</Label>
-                    <Select value={carData.drive || undefined} onValueChange={(value) => handleInputChange('drive', value)}>
-                      <SelectTrigger className="text-sm sm:text-base">
-                        <SelectValue placeholder="Выберите тип" />
-                      </SelectTrigger>
+                    <Label>Привод *</Label>
+                    <Select value={carData.drive || undefined} onValueChange={(v) => handleInputChange('drive', v)}>
+                      <SelectTrigger><SelectValue placeholder="Выберите тип" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="front">Передний</SelectItem>
                         <SelectItem value="rear">Задний</SelectItem>
@@ -290,13 +292,10 @@ export default function AddCarPage() {
                       </SelectContent>
                     </Select>
                   </div>
-
                   <div>
-                    <Label htmlFor="bodyType" className="text-sm sm:text-base">Тип кузова *</Label>
-                    <Select value={carData.bodyType || undefined} onValueChange={(value) => handleInputChange('bodyType', value)}>
-                      <SelectTrigger className="text-sm sm:text-base">
-                        <SelectValue placeholder="Выберите тип" />
-                      </SelectTrigger>
+                    <Label htmlFor="bodyType">Тип кузова *</Label>
+                    <Select value={carData.bodyType || undefined} onValueChange={(v) => handleInputChange('bodyType', v)}>
+                      <SelectTrigger><SelectValue placeholder="Выберите тип" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="sedan">Седан</SelectItem>
                         <SelectItem value="hatchback">Хэтчбек</SelectItem>
@@ -309,16 +308,9 @@ export default function AddCarPage() {
                       </SelectContent>
                     </Select>
                   </div>
-
                   <div>
-                    <Label htmlFor="color" className="text-sm sm:text-base">Цвет *</Label>
-                    <Input
-                      id="color"
-                      value={carData.color}
-                      onChange={(e) => handleInputChange('color', e.target.value)}
-                      placeholder="Например: Черный"
-                      className="text-sm sm:text-base"
-                    />
+                    <Label htmlFor="color">Цвет *</Label>
+                    <Input id="color" value={carData.color} onChange={(e) => handleInputChange('color', e.target.value)} />
                   </div>
                 </div>
               )}
@@ -326,58 +318,25 @@ export default function AddCarPage() {
               {currentStep === 2 && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                   <div>
-                    <Label htmlFor="power" className="text-sm sm:text-base">Мощность, л.с. *</Label>
-                    <Input
-                      id="power"
-                      type="number"
-                      value={carData.power}
-                      onChange={(e) => handleInputChange('power', e.target.value)}
-                      placeholder="150"
-                      className="text-sm sm:text-base"
-                    />
+                    <Label htmlFor="power">Мощность, л.с. *</Label>
+                    <Input id="power" type="number" value={carData.power} onChange={(e) => handleInputChange('power', e.target.value)} />
                   </div>
-
                   <div>
-                    <Label htmlFor="engineVolume" className="text-sm sm:text-base">Объем двигателя, л *</Label>
-                    <Input
-                      id="engineVolume"
-                      type="number"
-                      step="0.1"
-                      value={carData.engineVolume}
-                      onChange={(e) => handleInputChange('engineVolume', e.target.value)}
-                      placeholder="2.0"
-                      className="text-sm sm:text-base"
-                    />
+                    <Label htmlFor="engineVolume">Объем двигателя, л *</Label>
+                    <Input id="engineVolume" type="number" step="0.1" value={carData.engineVolume} onChange={(e) => handleInputChange('engineVolume', e.target.value)} />
                   </div>
-
                   <div>
-                    <Label htmlFor="euroStandard" className="text-sm sm:text-base">Экологический стандарт</Label>
-                    <Input
-                      id="euroStandard"
-                      value={carData.euroStandard}
-                      onChange={(e) => handleInputChange('euroStandard', e.target.value)}
-                      placeholder="Euro 6"
-                      className="text-sm sm:text-base"
-                    />
+                    <Label htmlFor="euroStandard">Экологический стандарт</Label>
+                    <Input id="euroStandard" value={carData.euroStandard} onChange={(e) => handleInputChange('euroStandard', e.target.value)} />
                   </div>
-
                   <div>
-                    <Label htmlFor="vin" className="text-sm sm:text-base">VIN номер</Label>
-                    <Input
-                      id="vin"
-                      value={carData.vin}
-                      onChange={(e) => handleInputChange('vin', e.target.value)}
-                      placeholder="Автоматически сгенерируется"
-                      className="text-sm sm:text-base"
-                    />
+                    <Label htmlFor="vin">VIN номер</Label>
+                    <Input id="vin" value={carData.vin} onChange={(e) => handleInputChange('vin', e.target.value)} placeholder="Автоматически сгенерируется" />
                   </div>
-
                   <div>
-                    <Label htmlFor="condition" className="text-sm sm:text-base">Состояние *</Label>
-                    <Select value={carData.condition || undefined} onValueChange={(value) => handleInputChange('condition', value)}>
-                      <SelectTrigger className="text-sm sm:text-base">
-                        <SelectValue placeholder="Выберите состояние" />
-                      </SelectTrigger>
+                    <Label>Состояние *</Label>
+                    <Select value={carData.condition || undefined} onValueChange={(v) => handleInputChange('condition', v)}>
+                      <SelectTrigger><SelectValue placeholder="Выберите состояние" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="excellent">Отличное</SelectItem>
                         <SelectItem value="good">Хорошее</SelectItem>
@@ -386,36 +345,19 @@ export default function AddCarPage() {
                       </SelectContent>
                     </Select>
                   </div>
-
                   <div>
-                    <Label htmlFor="owners" className="text-sm sm:text-base">Количество владельцев *</Label>
-                    <Input
-                      id="owners"
-                      type="number"
-                      value={carData.owners}
-                      onChange={(e) => handleInputChange('owners', e.target.value)}
-                      placeholder="1"
-                      className="text-sm sm:text-base"
-                    />
+                    <Label htmlFor="owners">Количество владельцев *</Label>
+                    <Input id="owners" type="number" value={carData.owners} onChange={(e) => handleInputChange('owners', e.target.value)} />
                   </div>
-
                   <div className="sm:col-span-2">
-                    <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="flex items-center gap-6">
                       <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="customs"
-                          checked={carData.customs}
-                          onCheckedChange={(checked) => handleInputChange('customs', checked)}
-                        />
-                        <Label htmlFor="customs" className="text-sm sm:text-base">Растаможен</Label>
+                        <Checkbox id="customs" checked={carData.customs} onCheckedChange={(v) => handleInputChange('customs', v)} />
+                        <Label htmlFor="customs">Растаможен</Label>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="vat"
-                          checked={carData.vat}
-                          onCheckedChange={(checked) => handleInputChange('vat', checked)}
-                        />
-                        <Label htmlFor="vat" className="text-sm sm:text-base">НДС</Label>
+                        <Checkbox id="vat" checked={carData.vat} onCheckedChange={(v) => handleInputChange('vat', v)} />
+                        <Label htmlFor="vat">НДС</Label>
                       </div>
                     </div>
                   </div>
@@ -424,10 +366,11 @@ export default function AddCarPage() {
 
               {currentStep === 3 && (
                 <div className="space-y-4 sm:space-y-6">
-                  <ImageUpload
-                    images={carData.photos}
-                    onImagesChange={(images) => handleInputChange('photos', images)}
-                    maxImages={10}
+                  <S3ImageUpload
+                    carId={savedCarId || 'new'}
+                    existingImages={carData.photos}   // ← ВАЖНО: даём текущий список
+                    onUploadComplete={handlePhotosUpdate}
+                    maxFiles={10}
                     className="w-full"
                   />
                 </div>
@@ -436,23 +379,13 @@ export default function AddCarPage() {
               {currentStep === 4 && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                   <div>
-                    <Label htmlFor="price" className="text-sm sm:text-base">Цена *</Label>
-                    <Input
-                      id="price"
-                      type="number"
-                      value={carData.price}
-                      onChange={(e) => handleInputChange('price', e.target.value)}
-                      placeholder="35000"
-                      className="text-sm sm:text-base"
-                    />
+                    <Label htmlFor="price">Цена *</Label>
+                    <Input id="price" type="number" value={carData.price} onChange={(e) => handleInputChange('price', e.target.value)} />
                   </div>
-
                   <div>
-                    <Label htmlFor="currency" className="text-sm sm:text-base">Валюта *</Label>
-                    <Select value={carData.currency || undefined} onValueChange={(value) => handleInputChange('currency', value)}>
-                      <SelectTrigger className="text-sm sm:text-base">
-                        <SelectValue placeholder="Выберите валюту" />
-                      </SelectTrigger>
+                    <Label htmlFor="currency">Валюта *</Label>
+                    <Select value={carData.currency || undefined} onValueChange={(v) => handleInputChange('currency', v)}>
+                      <SelectTrigger><SelectValue placeholder="Выберите валюту" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="EUR">EUR</SelectItem>
                         <SelectItem value="USD">USD</SelectItem>
@@ -461,39 +394,19 @@ export default function AddCarPage() {
                       </SelectContent>
                     </Select>
                   </div>
-
                   <div className="sm:col-span-2">
                     <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="negotiable"
-                        checked={carData.negotiable}
-                        onCheckedChange={(checked) => handleInputChange('negotiable', checked)}
-                      />
-                      <Label htmlFor="negotiable" className="text-sm sm:text-base">Торг</Label>
+                      <Checkbox id="negotiable" checked={carData.negotiable} onCheckedChange={(v) => handleInputChange('negotiable', v)} />
+                      <Label htmlFor="negotiable">Торг</Label>
                     </div>
                   </div>
-
                   <div>
-                    <Label htmlFor="city" className="text-sm sm:text-base">Город *</Label>
-                    <Input
-                      id="city"
-                      value={carData.city}
-                      onChange={(e) => handleInputChange('city', e.target.value)}
-                      placeholder="Москва"
-                      className="text-sm sm:text-base"
-                    />
+                    <Label htmlFor="city">Город *</Label>
+                    <Input id="city" value={carData.city} onChange={(e) => handleInputChange('city', e.target.value)} />
                   </div>
-
                   <div className="sm:col-span-2">
-                    <Label htmlFor="description" className="text-sm sm:text-base">Описание</Label>
-                    <Textarea
-                      id="description"
-                      value={carData.description}
-                      onChange={(e) => handleInputChange('description', e.target.value)}
-                      placeholder="Подробное описание автомобиля..."
-                      rows={4}
-                      className="text-sm sm:text-base"
-                    />
+                    <Label htmlFor="description">Описание</Label>
+                    <Textarea id="description" value={carData.description} onChange={(e) => handleInputChange('description', e.target.value)} rows={4} />
                   </div>
                 </div>
               )}
@@ -503,45 +416,29 @@ export default function AddCarPage() {
                   <div className="bg-gray-50 p-4 sm:p-6 rounded-lg">
                     <h3 className="text-lg sm:text-xl font-semibold mb-4">Предпросмотр</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 text-sm sm:text-base">
-                      <div>
-                        <strong>Марка:</strong> {carData.brand || 'Не указана'}
-                      </div>
-                      <div>
-                        <strong>Модель:</strong> {carData.model || 'Не указана'}
-                      </div>
-                      <div>
-                        <strong>Год:</strong> {carData.year || 'Не указан'}
-                      </div>
-                      <div>
-                        <strong>Пробег:</strong> {carData.mileage ? `${carData.mileage} км` : 'Не указан'}
-                      </div>
-                      <div>
-                        <strong>Цена:</strong> {carData.price ? `${carData.price} ${carData.currency}` : 'Не указана'}
-                      </div>
-                      <div>
-                        <strong>Город:</strong> {carData.city || 'Не указан'}
-                      </div>
+                      <div><strong>Марка:</strong> {carData.brand || 'Не указана'}</div>
+                      <div><strong>Модель:</strong> {carData.model || 'Не указана'}</div>
+                      <div><strong>Год:</strong> {carData.year || 'Не указан'}</div>
+                      <div><strong>Пробег:</strong> {carData.mileage ? `${carData.mileage} км` : 'Не указан'}</div>
+                      <div><strong>Цена:</strong> {carData.price ? `${carData.price} ${carData.currency}` : 'Не указана'}</div>
+                      <div><strong>Город:</strong> {carData.city || 'Не указан'}</div>
                     </div>
                   </div>
 
-                  {/* Предпросмотр изображений */}
                   {carData.photos.length > 0 && (
                     <div className="bg-gray-50 p-4 sm:p-6 rounded-lg">
                       <h3 className="text-lg sm:text-xl font-semibold mb-4">Фотографии ({carData.photos.length})</h3>
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                        {carData.photos.map((photo, index) => (
-                          <div key={index} className="relative aspect-square rounded-lg overflow-hidden">
-                            <Image
-                              src={photo}
-                              alt={`Фото ${index + 1}`}
-                              fill
-                              className="object-cover"
+                        {carData.photos.map((photo, idx) => (
+                          <div key={idx} className="relative aspect-square rounded-lg overflow-hidden">
+                            <S3Image
+                              src={photo && typeof photo === 'string' && photo.trim() !== '' ? photo : '/placeholder.svg?height=200&width=200&query=car'}
+                              alt={`Фото ${idx + 1}`}
+                              width={200}
+                              height={200}
+                              className="w-full h-full object-cover"
                             />
-                            {index === 0 && (
-                              <Badge className="absolute top-1 left-1 text-xs bg-blue-600">
-                                Главное
-                              </Badge>
-                            )}
+                            {idx === 0 && <Badge className="absolute top-1 left-1 text-xs bg-blue-600">Главное</Badge>}
                           </div>
                         ))}
                       </div>
@@ -554,50 +451,25 @@ export default function AddCarPage() {
 
           {/* Navigation */}
           <div className="flex flex-col sm:flex-row justify-between mt-6 sm:mt-8 gap-3 sm:gap-4">
-            <Button
-              variant="outline"
-              onClick={prevStep}
-              disabled={currentStep === 1}
-              className="w-full sm:w-auto text-sm sm:text-base"
-            >
+            <Button variant="outline" onClick={prevStep} disabled={currentStep === 1} className="w-full sm:w-auto text-sm sm:text-base">
               <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
               Назад
             </Button>
 
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               {currentStep < 5 ? (
-                <Button
-                  onClick={nextStep}
-                  className="w-full sm:w-auto text-sm sm:text-base"
-                >
+                <Button onClick={nextStep} className="w-full sm:w-auto text-sm sm:text-base">
                   Далее
                   <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2" />
                 </Button>
               ) : (
                 <>
-                  <Button
-                    variant="outline"
-                    onClick={saveDraft}
-                    disabled={loading}
-                    className="w-full sm:w-auto text-sm sm:text-base"
-                  >
-                    {loading ? (
-                      <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 animate-spin" />
-                    ) : (
-                      <Save className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                    )}
+                  <Button variant="outline" onClick={saveDraft} disabled={loading} className="w-full sm:w-auto text-sm sm:text-base">
+                    {loading ? <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 animate-spin" /> : <Save className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />}
                     Сохранить черновик
                   </Button>
-                  <Button
-                    onClick={publishCar}
-                    disabled={loading}
-                    className="w-full sm:w-auto text-sm sm:text-base"
-                  >
-                    {loading ? (
-                      <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 animate-spin" />
-                    ) : (
-                      <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                    )}
+                  <Button onClick={publishCar} disabled={loading} className="w-full sm:w-auto text-sm sm:text-base">
+                    {loading ? <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 animate-spin" /> : <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />}
                     Опубликовать
                   </Button>
                 </>

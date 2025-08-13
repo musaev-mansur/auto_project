@@ -437,7 +437,7 @@ export default function CarsPage() {
                   {/* Фото превью */}
                   <div className="relative h-48 sm:h-56">
                     <Image
-                      src={car.photos?.[0] || '/placeholder.svg?height=200&width=300&query=car'}
+                      src={car.photos?.[0] && typeof car.photos[0] === 'string' && car.photos[0].trim() !== '' ? car.photos[0] : '/placeholder.svg?height=200&width=300&query=car'}
                       alt={`${car.brand} ${car.model}`}
                       fill
                       className="object-cover rounded-t-lg"

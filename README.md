@@ -10,7 +10,7 @@ A modern car dealership platform with multilingual support (RU/EN) and comprehen
 
 ## 🚀 Features
 
-- 🌍 **Multilingual Support** - Russian/English localization
+- 🌍 **Multilingual Support** - Russian/English/Dutch/French localization
 - 🚗 **Car Management** - Full CRUD operations for vehicles
 - 👨‍💼 **Admin Panel** - Dealer dashboard with comprehensive controls
 - 🔍 **Advanced Filtering** - Search by brand, price, year, mileage
@@ -24,7 +24,7 @@ A modern car dealership platform with multilingual support (RU/EN) and comprehen
 
 ### Public Car Catalog
 - Browse available cars with advanced filters
-- Multilingual interface (RU/EN)
+- Multilingual interface (RU/EN/NL/FR)
 - Mobile-responsive design
 
 ### Car Details Page
@@ -98,9 +98,10 @@ A modern car dealership platform with multilingual support (RU/EN) and comprehen
 ### Admins
 - `GET /api/admins` - Get all admins (with pagination)
 
-### File Upload
-- `POST /api/upload` - Upload car images
-- `GET /api/files/[filename]` - Serve uploaded files
+### File Upload & S3 Management
+- `POST /api/images/upload` - Upload images to Amazon S3
+- `DELETE /api/images/delete` - Delete images from S3
+- `POST /api/images/delete` - Bulk delete images from S3
 
 ## 🛠️ Installation & Setup
 
@@ -123,6 +124,12 @@ Create a `.env` file in the root directory:
 DATABASE_URL="file:./dev.db"
 NEXTAUTH_SECRET="your-secret-key"
 RENDER="false"
+
+# AWS S3 Configuration (optional for local development)
+AWS_ACCESS_KEY_ID="your-aws-access-key-id"
+AWS_SECRET_ACCESS_KEY="your-aws-secret-access-key"
+AWS_REGION="eu-west-1"
+AWS_S3_BUCKET_NAME="autodealer-images"
 ```
 
 4. **Set up the database:**
@@ -143,6 +150,48 @@ npm run dev
 
 7. **Open your browser:**
 Navigate to [http://localhost:3000](http://localhost:3000)
+
+## ☁️ Amazon S3 Setup (Optional)
+
+### 1. Create S3 Bucket
+1. Go to [AWS S3 Console](https://console.aws.amazon.com/s3/)
+2. Create a new bucket named `autodealer-images`
+3. Set region to `eu-west-1` (or your preferred region)
+4. Configure bucket for public read access
+
+### 2. Configure CORS
+Add this CORS configuration to your S3 bucket:
+```json
+[
+  {
+    "AllowedHeaders": ["*"],
+    "AllowedMethods": ["GET", "PUT", "POST", "DELETE"],
+    "AllowedOrigins": ["*"],
+    "ExposeHeaders": []
+  }
+]
+```
+
+### 3. Create IAM User
+1. Go to [AWS IAM Console](https://console.aws.amazon.com/iam/)
+2. Create a new user with programmatic access
+3. Attach the `AmazonS3FullAccess` policy
+4. Save the Access Key ID and Secret Access Key
+
+### 4. Update Environment Variables
+Add your AWS credentials to `.env`:
+```env
+AWS_ACCESS_KEY_ID="your-access-key"
+AWS_SECRET_ACCESS_KEY="your-secret-key"
+AWS_REGION="eu-west-1"
+AWS_S3_BUCKET_NAME="autodealer-images"
+```
+
+### 5. Migrate Existing Images (Optional)
+Run the migration script to move existing images to S3:
+```bash
+npm run migrate:s3
+```
 
 ## 🧪 Test Data
 
@@ -242,14 +291,16 @@ curl -X POST http://localhost:3000/api/cars \
 - **bcryptjs** - Password hashing
 
 ### Features
-- **Multilingual Support** - i18n with React Context
-- **Image Upload** - File handling and storage
+- **Multilingual Support** - i18n with React Context (RU/EN/NL/FR)
+- **Amazon S3 Integration** - Cloud image storage and management
+- **Image Upload** - Drag & drop with preview and validation
 - **Responsive Design** - Mobile-first approach
 - **Form Validation** - Client and server-side validation
 
 ### Deployment
 - **Render** - Cloud hosting platform
 - **PostgreSQL** - Production database
+- **Amazon S3** - Cloud image storage
 - **Static File Serving** - Optimized image delivery
 
 ## 🤝 Contributing

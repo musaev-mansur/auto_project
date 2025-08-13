@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { Car, Phone, MessageCircle, Menu, X, Globe } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useLocale } from '@/contexts/locale-context'
+import type { Locale } from '@/contexts/locale-context'
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -15,7 +16,10 @@ export function Header() {
   }
 
   const toggleLocale = () => {
-    setLocale(locale === 'ru' ? 'en' : 'ru')
+    const locales: Locale[] = ['ru', 'en', 'nl', 'fr']
+    const currentIndex = locales.indexOf(locale)
+    const nextIndex = (currentIndex + 1) % locales.length
+    setLocale(locales[nextIndex])
   }
 
   return (
@@ -98,7 +102,11 @@ export function Header() {
               className="flex items-center space-x-2 justify-start text-gray-700 hover:text-blue-600"
             >
               <Globe className="h-4 w-4" />
-              <span>{locale === 'ru' ? 'English' : 'Русский'}</span>
+              <span>
+                {locale === 'ru' ? 'English' : 
+                 locale === 'en' ? 'Nederlands' : 
+                 locale === 'nl' ? 'Français' : 'Русский'}
+              </span>
             </Button>
             <Button variant="outline" size="sm" className="justify-start">
               <Phone className="h-4 w-4 mr-2" />

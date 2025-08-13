@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -11,8 +11,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, ArrowRight, Save, Eye, Loader2, RefreshCw } from 'lucide-react'
-import { ImageUpload } from '@/components/image-upload'
+import { ArrowLeft, ArrowRight, Save, Eye, Loader2, RefreshCw, Image as ImageIcon } from 'lucide-react'
+import S3ImageUpload from '@/components/s3-image-upload'
 import Image from 'next/image'
 import { Car } from '@/types'
 
@@ -155,9 +155,22 @@ export default function EditCarPage() {
     fetchCar()
   }, [params.id])
 
+  const uniq = (arr: string[]) => Array.from(new Set(arr.filter(Boolean)));
+
   const handleInputChange = (field: string, value: any) => {
-    setCarData(prev => ({ ...prev, [field]: value }))
-  }
+    if (field === 'photos') {
+      setCarData(prev => ({ ...prev, photos: uniq(Array.isArray(value) ? value.map(String) : []) }));
+    } else {
+      setCarData(prev => ({ ...prev, [field]: value }));
+    }
+  };
+
+  const handlePhotosFromChild = useCallback(
+    (images: string[]) => {
+      setCarData(prev => ({ ...prev, photos: uniq(images) }));
+    },
+    []
+  );
 
   const nextStep = () => {
     if (currentStep < 5) {
@@ -546,11 +559,12 @@ export default function EditCarPage() {
 
               {currentStep === 3 && (
                 <div className="space-y-4 sm:space-y-6">
-                  <ImageUpload
-                    images={carData.photos}
-                    onImagesChange={(images) => handleInputChange('photos', images)}
-                    maxImages={10}
+                  <S3ImageUpload
+                    carId={params.id as string}
+                    onUploadComplete={handlePhotosFromChild}
+                    maxFiles={10}
                     className="w-full"
+                    existingImages={carData.photos}
                   />
                 </div>
               )}
@@ -667,23 +681,29 @@ export default function EditCarPage() {
                   {carData.photos.length > 0 && (
                     <div className="bg-gray-50 p-4 sm:p-6 rounded-lg">
                       <h3 className="text-lg sm:text-xl font-semibold mb-4">Фотографии ({carData.photos.length})</h3>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                        {carData.photos.map((photo, index) => (
-                          <div key={index} className="relative aspect-square rounded-lg overflow-hidden">
-                            <Image
-                              src={photo}
-                              alt={`Фото ${index + 1}`}
-                              fill
-                              className="object-cover"
-                            />
-                            {index === 0 && (
-                              <Badge className="absolute top-1 left-1 text-xs bg-blue-600">
-                                Главное
-                              </Badge>
-                            )}
-                          </div>
-                        ))}
-                      </div>
+                                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                         {carData.photos.map((photo, index) => (
+                           <div key={index} className="relative aspect-square rounded-lg overflow-hidden">
+                                                           {photo && typeof photo === 'string' && photo.trim() !== '' ? (
+                                <Image
+                                  src={photo}
+                                  alt={`Фото ${index + 1}`}
+                                  fill
+                                  className="object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                                  <ImageIcon className="h-8 w-8 text-gray-400" />
+                                </div>
+                              )}
+                             {index === 0 && (
+                               <Badge className="absolute top-1 left-1 text-xs bg-blue-600">
+                                 Главное
+                               </Badge>
+                             )}
+                           </div>
+                         ))}
+                       </div>
                     </div>
                   )}
                 </div>

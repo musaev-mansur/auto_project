@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { ChevronLeft, ChevronRight, X, Maximize2, ZoomIn } from 'lucide-react'
 import Image from 'next/image'
+import S3Image from '@/components/s3-image'
 
 interface ImageGalleryProps {
   images: string[]
@@ -107,14 +108,25 @@ export function ImageGallery({ images, alt, className = '' }: ImageGalleryProps)
       <div className={`space-y-4 ${className}`}>
         {/* Главное изображение */}
         <div className="relative aspect-video rounded-lg overflow-hidden group bg-gray-100">
-          <Image
-            src={images[0]}
-            alt={alt}
-            fill
-            className="object-cover transition-transform group-hover:scale-105"
-            sizes="(max-width: 1024px) 100vw, 1024px"
-            priority
-          />
+          {images[0] && typeof images[0] === 'string' && images[0].trim() !== '' ? (
+            <S3Image
+              src={images[0]}
+              alt={alt}
+              width={600}
+              height={400}
+              className="object-cover transition-transform group-hover:scale-105 w-full h-full"
+              fallback="/placeholder.svg?height=400&width=600&query=car"
+            />
+          ) : (
+            <Image
+              src="/placeholder.svg?height=400&width=600&query=car"
+              alt={alt}
+              fill
+              className="object-cover transition-transform group-hover:scale-105"
+              sizes="(max-width: 1024px) 100vw, 1024px"
+              priority
+            />
+          )}
           <div className="absolute inset-0 bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200" />
 
           {/* Zoom */}
@@ -172,13 +184,24 @@ export function ImageGallery({ images, alt, className = '' }: ImageGalleryProps)
                 className="relative aspect-square rounded-lg overflow-hidden cursor-pointer group"
                 onClick={() => openImage(index)}
               >
-                <Image
-                  src={image}
-                  alt={`${alt} ${index + 1}`}
-                  fill
-                  className="object-cover transition-transform group-hover:scale-105"
-                  sizes="(max-width: 640px) 25vw, (max-width: 1024px) 16vw, 120px"
-                />
+                {image && typeof image === 'string' && image.trim() !== '' ? (
+                  <S3Image
+                    src={image}
+                    alt={`${alt} ${index + 1}`}
+                    width={120}
+                    height={120}
+                    className="object-cover transition-transform group-hover:scale-105 w-full h-full"
+                    fallback="/placeholder.svg?height=120&width=120&query=car"
+                  />
+                ) : (
+                  <Image
+                    src="/placeholder.svg?height=120&width=120&query=car"
+                    alt={`${alt} ${index + 1}`}
+                    fill
+                    className="object-cover transition-transform group-hover:scale-105"
+                    sizes="(max-width: 640px) 25vw, (max-width: 1024px) 16vw, 120px"
+                  />
+                )}
                 <div className="absolute inset-0 bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200" />
                 <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                   <ZoomIn className="h-3 w-3 text-white drop-shadow-md" />
@@ -254,15 +277,26 @@ export function ImageGallery({ images, alt, className = '' }: ImageGalleryProps)
                   maxHeight: 'calc(100dvh - 6rem)',
                 }}
               >
-                <Image
-                  src={images[selectedImage]}
-                  alt={`${alt} ${selectedImage + 1}`}
-                  width={1920}
-                  height={1080}
-                  className="w-auto h-auto max-w-full max-h-full object-contain"
-                  priority
-                  sizes="100vw"
-                />
+                {images[selectedImage] && typeof images[selectedImage] === 'string' && images[selectedImage].trim() !== '' ? (
+                  <S3Image
+                    src={images[selectedImage]}
+                    alt={`${alt} ${selectedImage + 1}`}
+                    width={1920}
+                    height={1080}
+                    className="w-auto h-auto max-w-full max-h-full object-contain"
+                    fallback="/placeholder.svg?height=1080&width=1920&query=car"
+                  />
+                ) : (
+                  <Image
+                    src="/placeholder.svg?height=1080&width=1920&query=car"
+                    alt={`${alt} ${selectedImage + 1}`}
+                    width={1920}
+                    height={1080}
+                    className="w-auto h-auto max-w-full max-h-full object-contain"
+                    priority
+                    sizes="100vw"
+                  />
+                )}
               </div>
             )}
 

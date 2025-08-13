@@ -63,10 +63,11 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     
     // Валидация обязательных полей
-    const requiredFields = ['brand', 'model', 'year', 'mileage', 'transmission', 'fuel', 'drive', 'bodyType', 'color', 'power', 'engineVolume', 'euroStandard', 'vin', 'condition', 'price', 'currency', 'city', 'description']
+    const requiredFields = ['brand', 'model', 'year', 'mileage', 'transmission', 'fuel', 'drive', 'bodyType', 'color', 'power', 'engineVolume', 'condition', 'price', 'currency', 'city']
     const missingFields = requiredFields.filter(field => !body[field])
     
     if (missingFields.length > 0) {
+      console.log('Missing required fields:', missingFields, 'Body:', body)
       return NextResponse.json(
         { error: `Отсутствуют обязательные поля: ${missingFields.join(', ')}` },
         { status: 400 }
@@ -101,8 +102,8 @@ export async function POST(request: NextRequest) {
       color: body.color,
       power: parseInt(body.power),
       engineVolume: parseFloat(body.engineVolume),
-      euroStandard: body.euroStandard,
-      vin: body.vin,
+      euroStandard: body.euroStandard || '',
+      vin: body.vin || `AUTO${Date.now()}`,
       condition: body.condition,
       customs: Boolean(body.customs),
       vat: Boolean(body.vat),
@@ -111,11 +112,13 @@ export async function POST(request: NextRequest) {
       currency: body.currency,
       negotiable: Boolean(body.negotiable),
       city: body.city,
-      description: body.description,
+      description: body.description || '',
       photos: Array.isArray(body.photos) ? JSON.stringify(body.photos) : JSON.stringify(['/placeholder.jpg']),
       status: body.status || 'draft',
       adminId: adminId
     }
+    
+    console.log('Creating car with data:', carData)
 
     const car = await prisma.car.create({
       data: carData,

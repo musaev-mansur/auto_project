@@ -134,7 +134,7 @@ export default function CarDetailPage() {
             {/* Фото */}
             <div className="lg:col-span-2">
               <ImageGallery 
-                images={car.photos || []} 
+                images={(car.photos || []).filter((photo: string) => photo && typeof photo === 'string' && photo.trim() !== '')} 
                 alt={`${car.brand} ${car.model}`}
                 className="w-full"
               />

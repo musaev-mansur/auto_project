@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Calendar, Gauge, Fuel, Settings, Camera, Zap, Droplets } from 'lucide-react'
 import { getFuelText, getTransmissionText } from '@/lib/translations'
 import { useLocale } from '@/contexts/locale-context'
+import S3Image from '@/components/s3-image'
 
 interface CarCardProps {
   car: Car
@@ -28,13 +29,24 @@ export function CarCard({ car }: CarCardProps) {
     <Link href={`/cars/${car.id}`}>
       <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
         <div className="relative group">
-          <Image
-            src={car.photos?.[0] || '/placeholder.svg?height=200&width=300&query=car'}
-            alt={`${car.brand} ${car.model}`}
-            width={300}
-            height={200}
-            className="w-full h-40 sm:h-48 object-cover rounded-t-lg transition-transform group-hover:scale-105"
-          />
+          {car.photos?.[0] && typeof car.photos[0] === 'string' && car.photos[0].trim() !== '' ? (
+            <S3Image
+              src={car.photos[0]}
+              alt={`${car.brand} ${car.model}`}
+              width={300}
+              height={200}
+              className="w-full h-40 sm:h-48 object-cover rounded-t-lg transition-transform group-hover:scale-105"
+              fallback="/placeholder.svg?height=200&width=300&query=car"
+            />
+          ) : (
+            <Image
+              src="/placeholder.svg?height=200&width=300&query=car"
+              alt={`${car.brand} ${car.model}`}
+              width={300}
+              height={200}
+              className="w-full h-40 sm:h-48 object-cover rounded-t-lg transition-transform group-hover:scale-105"
+            />
+          )}
           
           {/* Индикатор количества фото */}
           {car.photos && car.photos.length > 1 && (
