@@ -131,6 +131,11 @@ const translations = {
     'parts.sort.oldest': 'Сначала старые',
     'parts.sort.priceAsc': 'Цена: по возрастанию',
     'parts.sort.priceDesc': 'Цена: по убыванию',
+    'parts.newest': 'Сначала новые',
+    'parts.oldest': 'Сначала старые',
+    'parts.priceAsc': 'Цена: по возрастанию',
+    'parts.priceDesc': 'Цена: по убыванию',
+    'parts.modelPlaceholder': 'Модель автомобиля',
     
     // Footer
     'footer.tagline': 'Качественные автомобили и запчасти по лучшим ценам',
@@ -261,6 +266,11 @@ const translations = {
     'parts.sort.oldest': 'Oldest first',
     'parts.sort.priceAsc': 'Price: low to high',
     'parts.sort.priceDesc': 'Price: high to low',
+    'parts.newest': 'Newest first',
+    'parts.oldest': 'Oldest first',
+    'parts.priceAsc': 'Price: low to high',
+    'parts.priceDesc': 'Price: high to low',
+    'parts.modelPlaceholder': 'Car model',
     
     // Footer
     'footer.tagline': 'Quality cars and parts at the best prices',
@@ -391,6 +401,11 @@ const translations = {
     'parts.sort.oldest': 'Oudste eerst',
     'parts.sort.priceAsc': 'Prijs: laag naar hoog',
     'parts.sort.priceDesc': 'Prijs: hoog naar laag',
+    'parts.newest': 'Nieuwste eerst',
+    'parts.oldest': 'Oudste eerst',
+    'parts.priceAsc': 'Prijs: laag naar hoog',
+    'parts.priceDesc': 'Prijs: hoog naar laag',
+    'parts.modelPlaceholder': 'Automodel',
     
     // Footer
     'footer.tagline': 'Kwaliteitsauto\'s en onderdelen tegen de beste prijzen',
@@ -521,6 +536,11 @@ const translations = {
     'parts.sort.oldest': 'Plus ancien d\'abord',
     'parts.sort.priceAsc': 'Prix: croissant',
     'parts.sort.priceDesc': 'Prix: décroissant',
+    'parts.newest': 'Plus récent d\'abord',
+    'parts.oldest': 'Plus ancien d\'abord',
+    'parts.priceAsc': 'Prix: croissant',
+    'parts.priceDesc': 'Prix: décroissant',
+    'parts.modelPlaceholder': 'Modèle de voiture',
     
     // Footer
     'footer.tagline': 'Voitures et pièces de qualité aux meilleurs prix',

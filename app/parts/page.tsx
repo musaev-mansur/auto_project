@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
@@ -43,7 +43,7 @@ interface Pagination {
   pages: number
 }
 
-export default function PartsPage() {
+function PartsContent() {
   const [parts, setParts] = useState<Part[]>([])
   const [pagination, setPagination] = useState<Pagination | null>(null)
   const [loading, setLoading] = useState(true)
@@ -137,8 +137,250 @@ export default function PartsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
+      <div className="container mx-auto px-4 py-8">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="bg-white rounded-lg shadow p-4">
+                <div className="h-48 bg-gray-200 rounded mb-4"></div>
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      {/* Заголовок */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          {t('parts.title')}
+        </h1>
+        <p className="text-gray-600">
+          {t('parts.subtitle')}
+        </p>
+      </div>
+
+      {/* Поиск и фильтры */}
+      <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+        <div className="flex flex-col lg:flex-row gap-4">
+          {/* Поиск */}
+          <div className="flex-1">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder={t('parts.searchPlaceholder')}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+              />
+            </div>
+          </div>
+
+          {/* Категория */}
+          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <SelectTrigger className="w-full lg:w-48">
+              <SelectValue placeholder={t('parts.allCategories')} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('parts.allCategories')}</SelectItem>
+              {categories.map(category => (
+                <SelectItem key={category} value={category}>
+                  {category === 'engine' ? 'Двигатель' :
+                   category === 'transmission' ? 'Трансмиссия' :
+                   category === 'brakes' ? 'Тормоза' :
+                   category === 'suspension' ? 'Подвеска' :
+                   category === 'electrical' ? 'Электрика' :
+                   category === 'body' ? 'Кузов' :
+                   category === 'interior' ? 'Салон' :
+                   category === 'exterior' ? 'Внешний вид' :
+                   category === 'wheels' ? 'Колеса' :
+                   category === 'tires' ? 'Шины' : 'Другое'}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Состояние */}
+          <Select value={selectedCondition} onValueChange={setSelectedCondition}>
+            <SelectTrigger className="w-full lg:w-48">
+              <SelectValue placeholder={t('parts.allConditions')} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('parts.allConditions')}</SelectItem>
+              {conditions.map(condition => (
+                <SelectItem key={condition} value={condition}>
+                  {condition === 'new' ? 'Новое' :
+                   condition === 'used' ? 'Б/у' : 'Восстановленное'}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Марка */}
+          <Select value={selectedBrand} onValueChange={setSelectedBrand}>
+            <SelectTrigger className="w-full lg:w-48">
+              <SelectValue placeholder={t('parts.allBrands')} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('parts.allBrands')}</SelectItem>
+              {brands.map(brand => (
+                <SelectItem key={brand} value={brand}>{brand}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Сортировка */}
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-full lg:w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">{t('parts.newest')}</SelectItem>
+              <SelectItem value="oldest">{t('parts.oldest')}</SelectItem>
+              <SelectItem value="price_asc">{t('parts.priceAsc')}</SelectItem>
+              <SelectItem value="price_desc">{t('parts.priceDesc')}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Дополнительные фильтры */}
+        <div className="mt-4 flex flex-col lg:flex-row gap-4 items-center">
+          <div className="flex-1">
+            <Input
+              placeholder={t('parts.modelPlaceholder')}
+              value={selectedModel}
+              onChange={(e) => setSelectedModel(e.target.value)}
+            />
+          </div>
+
+          <div className="flex gap-2">
+            <Button onClick={handleSearch} className="flex items-center gap-2">
+              <Search className="h-4 w-4" />
+              {t('parts.search')}
+            </Button>
+            <Button variant="outline" onClick={clearFilters}>
+              {t('parts.clearFilters')}
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Результаты */}
+      <div className="flex justify-between items-center mb-6">
+        <div className="text-sm text-gray-600">
+          {pagination && (
+            <>
+              {t('parts.showing')} {((pagination.page - 1) * pagination.limit) + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)} {t('parts.of')} {pagination.total} {t('parts.results')}
+            </>
+          )}
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <Button
+            variant={viewMode === 'grid' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setViewMode('grid')}
+          >
+            <Grid className="h-4 w-4" />
+          </Button>
+          <Button
+            variant={viewMode === 'list' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setViewMode('list')}
+          >
+            <List className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Список запчастей */}
+      {parts.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="text-gray-400 text-6xl mb-4">🔧</div>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            {t('parts.noResults')}
+          </h3>
+          <p className="text-gray-600">
+            {t('parts.noResultsDescription')}
+          </p>
+        </div>
+      ) : (
+        <div className={viewMode === 'grid' 
+          ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+          : "space-y-4"
+        }>
+          {parts.map((part) => (
+            <PartCard key={part.id} part={part} viewMode={viewMode} />
+          ))}
+        </div>
+      )}
+
+      {/* Пагинация */}
+      {pagination && pagination.pages > 1 && (
+        <div className="flex justify-center mt-8">
+          <div className="flex gap-2">
+            {pagination.page > 1 && (
+              <Button
+                variant="outline"
+                onClick={() => handlePageChange(pagination.page - 1)}
+              >
+                {t('parts.previous')}
+              </Button>
+            )}
+            
+            {[...Array(pagination.pages)].map((_, i) => {
+              const page = i + 1
+              if (
+                page === 1 ||
+                page === pagination.pages ||
+                (page >= pagination.page - 2 && page <= pagination.page + 2)
+              ) {
+                return (
+                  <Button
+                    key={page}
+                    variant={page === pagination.page ? 'default' : 'outline'}
+                    onClick={() => handlePageChange(page)}
+                  >
+                    {page}
+                  </Button>
+                )
+              } else if (
+                page === pagination.page - 3 ||
+                page === pagination.page + 3
+              ) {
+                return <span key={page} className="px-3 py-2">...</span>
+              }
+              return null
+            })}
+            
+            {pagination.page < pagination.pages && (
+              <Button
+                variant="outline"
+                onClick={() => handlePageChange(pagination.page + 1)}
+              >
+                {t('parts.next')}
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default function PartsPage() {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+      <Suspense fallback={
         <div className="container mx-auto px-4 py-8">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
@@ -154,239 +396,9 @@ export default function PartsPage() {
             </div>
           </div>
         </div>
-        <Footer />
-      </div>
-    )
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      
-      <div className="container mx-auto px-4 py-8">
-        {/* Заголовок */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            {t('parts.title')}
-          </h1>
-          <p className="text-gray-600">
-            {t('parts.subtitle')}
-          </p>
-        </div>
-
-        {/* Поиск и фильтры */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-          <div className="flex flex-col lg:flex-row gap-4">
-            {/* Поиск */}
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder={t('parts.searchPlaceholder')}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                />
-              </div>
-            </div>
-
-            {/* Категория */}
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="w-full lg:w-48">
-                <SelectValue placeholder={t('parts.allCategories')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('parts.allCategories')}</SelectItem>
-                {categories.map(category => (
-                  <SelectItem key={category} value={category}>
-                    {t(`parts.categories.${category}`)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Состояние */}
-            <Select value={selectedCondition} onValueChange={setSelectedCondition}>
-              <SelectTrigger className="w-full lg:w-48">
-                <SelectValue placeholder={t('parts.allConditions')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('parts.allConditions')}</SelectItem>
-                {conditions.map(condition => (
-                  <SelectItem key={condition} value={condition}>
-                    {t(`parts.conditions.${condition}`)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Сортировка */}
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-full lg:w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="newest">{t('parts.sort.newest')}</SelectItem>
-                <SelectItem value="oldest">{t('parts.sort.oldest')}</SelectItem>
-                <SelectItem value="price_asc">{t('parts.sort.priceAsc')}</SelectItem>
-                <SelectItem value="price_desc">{t('parts.sort.priceDesc')}</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Кнопки */}
-            <div className="flex gap-2">
-              <Button onClick={handleSearch} className="bg-blue-600 hover:bg-blue-700">
-                <Search className="h-4 w-4 mr-2" />
-                {t('parts.search')}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setShowFilters(!showFilters)}
-                className="lg:hidden"
-              >
-                <Filter className="h-4 w-4 mr-2" />
-                {t('parts.filters')}
-              </Button>
-            </div>
-          </div>
-
-          {/* Дополнительные фильтры */}
-          {showFilters && (
-            <div className="mt-4 pt-4 border-t">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Select value={selectedBrand} onValueChange={setSelectedBrand}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t('parts.allBrands')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t('parts.allBrands')}</SelectItem>
-                    {brands.map(brand => (
-                      <SelectItem key={brand} value={brand}>{brand}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <Input
-                  placeholder={t('parts.model')}
-                  value={selectedModel}
-                  onChange={(e) => setSelectedModel(e.target.value)}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Очистить фильтры */}
-          {(searchTerm || (selectedCategory && selectedCategory !== 'all') || (selectedCondition && selectedCondition !== 'all') || (selectedBrand && selectedBrand !== 'all') || selectedModel) && (
-            <div className="mt-4 pt-4 border-t">
-              <Button variant="ghost" onClick={clearFilters} className="text-gray-500">
-                {t('parts.clearFilters')}
-              </Button>
-            </div>
-          )}
-        </div>
-
-        {/* Результаты */}
-        <div className="flex justify-between items-center mb-6">
-          <div className="text-gray-600">
-            {pagination && (
-              <>
-                {t('parts.showing')} {(pagination.page - 1) * pagination.limit + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)} {t('parts.of')} {pagination.total} {t('parts.results')}
-              </>
-            )}
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Button
-              variant={viewMode === 'grid' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('grid')}
-            >
-              <Grid className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === 'list' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('list')}
-            >
-              <List className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Список запчастей */}
-        {parts.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-gray-400 text-6xl mb-4">🔧</div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              {t('parts.noResults')}
-            </h3>
-            <p className="text-gray-600">
-              {t('parts.noResultsDescription')}
-            </p>
-          </div>
-        ) : (
-          <div className={viewMode === 'grid' 
-            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-            : "space-y-4"
-          }>
-            {parts.map((part) => (
-              <PartCard key={part.id} part={part} viewMode={viewMode} />
-            ))}
-          </div>
-        )}
-
-        {/* Пагинация */}
-        {pagination && pagination.pages > 1 && (
-          <div className="flex justify-center mt-8">
-            <div className="flex gap-2">
-              {pagination.page > 1 && (
-                <Button
-                  variant="outline"
-                  onClick={() => handlePageChange(pagination.page - 1)}
-                >
-                  {t('parts.previous')}
-                </Button>
-              )}
-              
-              {[...Array(pagination.pages)].map((_, i) => {
-                const page = i + 1
-                if (
-                  page === 1 ||
-                  page === pagination.pages ||
-                  (page >= pagination.page - 2 && page <= pagination.page + 2)
-                ) {
-                  return (
-                    <Button
-                      key={page}
-                      variant={page === pagination.page ? 'default' : 'outline'}
-                      onClick={() => handlePageChange(page)}
-                    >
-                      {page}
-                    </Button>
-                  )
-                } else if (
-                  page === pagination.page - 3 ||
-                  page === pagination.page + 3
-                ) {
-                  return <span key={page} className="px-3 py-2">...</span>
-                }
-                return null
-              })}
-              
-              {pagination.page < pagination.pages && (
-                <Button
-                  variant="outline"
-                  onClick={() => handlePageChange(pagination.page + 1)}
-                >
-                  {t('parts.next')}
-                </Button>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-
+      }>
+        <PartsContent />
+      </Suspense>
       <Footer />
     </div>
   )
