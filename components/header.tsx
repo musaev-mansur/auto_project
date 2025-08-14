@@ -38,7 +38,7 @@ export function Header() {
             <Link href="/cars" className="text-gray-700 hover:text-blue-600">
               {t('nav.cars')}
             </Link>
-            <Link href="/#" className="text-gray-700 hover:text-blue-600">
+            <Link href="/parts" className="text-gray-700 hover:text-blue-600">
               {t('nav.parts')}
             </Link>
             <Link href="/#" className="text-gray-700 hover:text-blue-600">
@@ -89,7 +89,7 @@ export function Header() {
             <Link href="/cars" className="text-gray-700 hover:text-blue-600">
               {t('nav.cars')}
             </Link>
-            <Link href="/#" className="text-gray-700 hover:text-blue-600">
+            <Link href="/parts" className="text-gray-700 hover:text-blue-600">
               {t('nav.parts')}
             </Link>
             <Link href="/#" className="text-gray-700 hover:text-blue-600">

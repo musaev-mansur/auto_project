@@ -10,6 +10,7 @@
     "db:seed": "tsx scripts/seed.ts",
     "db:seed:prod": "npx tsx scripts/seed.ts",
     "db:seed:production": "tsx scripts/seed-production.ts",
+    "db:seed:parts": "tsx scripts/seed-parts.ts",
     "migrate:s3": "tsx scripts/migrate-images-to-s3.ts",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",

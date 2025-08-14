@@ -201,3 +201,61 @@ export const getStatusText = (status: string, locale: Locale = 'ru') => {
   }
   return statusMaps[locale][status as keyof typeof statusMaps.ru] || status
 }
+
+export const getCategoryText = (category: string, locale: Locale = 'ru') => {
+  const categoryMaps = {
+    ru: {
+      engine: 'Двигатель',
+      transmission: 'Трансмиссия',
+      brakes: 'Тормоза',
+      suspension: 'Подвеска',
+      electrical: 'Электрика',
+      body: 'Кузов',
+      interior: 'Салон',
+      exterior: 'Внешний вид',
+      wheels: 'Колеса',
+      tires: 'Шины',
+      other: 'Другое'
+    },
+    en: {
+      engine: 'Engine',
+      transmission: 'Transmission',
+      brakes: 'Brakes',
+      suspension: 'Suspension',
+      electrical: 'Electrical',
+      body: 'Body',
+      interior: 'Interior',
+      exterior: 'Exterior',
+      wheels: 'Wheels',
+      tires: 'Tires',
+      other: 'Other'
+    },
+    nl: {
+      engine: 'Motor',
+      transmission: 'Transmissie',
+      brakes: 'Remmen',
+      suspension: 'Ophanging',
+      electrical: 'Elektrisch',
+      body: 'Carrosserie',
+      interior: 'Interieur',
+      exterior: 'Exterieur',
+      wheels: 'Wielen',
+      tires: 'Banden',
+      other: 'Andere'
+    },
+    fr: {
+      engine: 'Moteur',
+      transmission: 'Transmission',
+      brakes: 'Freins',
+      suspension: 'Suspension',
+      electrical: 'Électrique',
+      body: 'Carrosserie',
+      interior: 'Intérieur',
+      exterior: 'Extérieur',
+      wheels: 'Roues',
+      tires: 'Pneus',
+      other: 'Autre'
+    }
+  }
+  return categoryMaps[locale][category as keyof typeof categoryMaps.ru] || category
+}

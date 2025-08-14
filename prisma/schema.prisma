@@ -22,7 +22,8 @@ model Admin {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  cars Car[]
+  cars  Car[]
+  parts Part[]
 }
 
 model Car {
@@ -55,6 +56,30 @@ model Car {
   views         Int      @default(0)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  adminId String
+  admin   Admin  @relation(fields: [adminId], references: [id], onDelete: Cascade)
+}
+
+model Part {
+  id          String   @id @default(cuid())
+  name        String
+  brand       String
+  model       String
+  yearFrom    Int?
+  yearTo      Int?
+  category    String   // engine, transmission, brakes, suspension, etc.
+  condition   String   // new, used, refurbished
+  price       Float
+  currency    String
+  negotiable  Boolean  @default(false)
+  city        String
+  description String
+  photos      String   // JSON string of photo URLs
+  status      String   @default("draft")
+  views       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   adminId String
   admin   Admin  @relation(fields: [adminId], references: [id], onDelete: Cascade)

@@ -9,6 +9,31 @@ import { Car, Package, Plus, MessageSquare, Settings, Eye, Edit, Trash2, Refresh
 import { AdminQuickActions } from '@/components/admin-quick-actions'
 import { Car as CarType } from '@/types'
 
+interface Part {
+  id: string
+  name: string
+  brand: string
+  model: string
+  yearFrom?: number
+  yearTo?: number
+  category: string
+  condition: string
+  price: number
+  currency: string
+  negotiable: boolean
+  city: string
+  description: string
+  photos: string[]
+  status: string
+  views: number
+  createdAt: string
+  admin: {
+    id: string
+    name: string
+    email: string
+  }
+}
+
 // Функция для преобразования данных из API в формат Car
 function transformCarFromAPI(carData: any): CarType {
   return {
@@ -47,6 +72,7 @@ function transformCarFromAPI(carData: any): CarType {
 export default function DealerDashboard() {
   const [activeTab, setActiveTab] = useState('overview')
   const [cars, setCars] = useState<CarType[]>([])
+  const [parts, setParts] = useState<Part[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -80,7 +106,66 @@ export default function DealerDashboard() {
 
   useEffect(() => {
     fetchCars()
+    fetchParts()
   }, [])
+
+  const fetchParts = async () => {
+    try {
+      const response = await fetch('/api/parts')
+      if (response.ok) {
+        const data = await response.json()
+        setParts(data.parts || [])
+      }
+    } catch (error) {
+      console.error('Error fetching parts:', error)
+    }
+  }
+
+  const handleDeletePart = async (partId: string) => {
+    if (!confirm('Вы уверены, что хотите удалить эту запчасть?')) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/parts/${partId}`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        console.log('Запчасть успешно удалена')
+        fetchParts()
+      } else {
+        const errorData = await response.json()
+        alert(`Ошибка при удалении: ${errorData.error}`)
+      }
+    } catch (error) {
+      console.error('Ошибка при удалении запчасти:', error)
+      alert('Ошибка при удалении запчасти')
+    }
+  }
+
+  const handlePartStatusChange = async (partId: string, newStatus: string) => {
+    try {
+      const response = await fetch(`/api/parts/${partId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus })
+      })
+
+      if (response.ok) {
+        console.log('Статус запчасти обновлен')
+        fetchParts()
+      } else {
+        const errorData = await response.json()
+        alert(`Ошибка при обновлении: ${errorData.error}`)
+      }
+    } catch (error) {
+      console.error('Ошибка при обновлении статуса запчасти:', error)
+      alert('Ошибка при обновлении статуса запчасти')
+    }
+  }
 
   // Фильтрация автомобилей по статусу
   const publishedCars = cars.filter(car => car.status === 'published')
@@ -440,6 +525,11 @@ export default function DealerDashboard() {
                                 <Eye className="h-3 w-3 lg:h-4 lg:w-4" />
                               </Button>
                             </Link>
+                            <Link href={`/dealer/car-part/${car.id}`}>
+                              <Button size="sm" variant="outline" className="flex-1">
+                                <Edit className="h-3 w-3 lg:h-4 lg:w-4" />
+                              </Button>
+                            </Link>
                             <Button 
                               size="sm" 
                               variant="outline"
@@ -468,14 +558,113 @@ export default function DealerDashboard() {
           {activeTab === 'add-part' && (
             <div className="space-y-4 lg:space-y-6">
               <h2 className="text-xl lg:text-2xl font-bold">Добавить запчасть</h2>
-              <p className="text-gray-600 text-sm lg:text-base">Функция управления запчастями будет добавлена в следующем обновлении.</p>
+              <Link href="/dealer/add-part">
+                <Button size="lg" className="w-full sm:w-auto">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Начать добавление запчасти
+                </Button>
+              </Link>
             </div>
           )}
 
           {activeTab === 'my-parts' && (
             <div className="space-y-4 lg:space-y-6">
-              <h2 className="text-xl lg:text-2xl font-bold">Мои запчасти</h2>
-              <p className="text-gray-600 text-sm lg:text-base">Функция управления запчастями будет добавлена в следующем обновлении.</p>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <h2 className="text-xl lg:text-2xl font-bold">Мои запчасти</h2>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button onClick={fetchParts} variant="outline" disabled={loading} size="sm" className="text-xs lg:text-sm">
+                    <RefreshCw className={`h-3 w-3 lg:h-4 lg:w-4 mr-1 lg:mr-2 ${loading ? 'animate-spin' : ''}`} />
+                    Обновить
+                  </Button>
+                  <Link href="/dealer/add-part">
+                    <Button size="sm" className="text-xs lg:text-sm w-full sm:w-auto">
+                      <Plus className="mr-1 lg:mr-2 h-3 w-3 lg:h-4 lg:w-4" />
+                      Добавить запчасть
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+
+              {parts.length === 0 ? (
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-center py-8">
+                      <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-gray-600 mb-2">
+                        Запчасти не найдены
+                      </h3>
+                      <p className="text-gray-500 mb-4">
+                        У вас пока нет добавленных запчастей
+                      </p>
+                      <Link href="/dealer/add-part">
+                        <Button size="sm" className="text-xs lg:text-sm">
+                          <Plus className="h-3 w-3 lg:h-4 lg:w-4 mr-1 lg:mr-2" />
+                          Добавить первую запчасть
+                        </Button>
+                      </Link>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+                  {parts.map((part: Part) => (
+                    <Card key={part.id}>
+                      <CardContent className="p-3 lg:p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="font-semibold text-sm lg:text-base">{part.name}</h3>
+                          <Badge 
+                            variant={part.status === 'published' ? 'default' : 
+                                    part.status === 'draft' ? 'secondary' : 'destructive'}
+                            className="text-xs"
+                          >
+                            {part.status === 'published' ? 'Опубликовано' :
+                             part.status === 'draft' ? 'Черновик' : 'Продано'}
+                          </Badge>
+                        </div>
+                        <p className="text-xs lg:text-sm text-gray-600 mb-1">
+                          {part.brand} {part.model}
+                        </p>
+                        <p className="text-base lg:text-lg font-bold text-blue-600 mb-2">
+                          {part.price.toLocaleString()} {part.currency}
+                        </p>
+                        <p className="text-xs lg:text-sm text-gray-600 mb-3">
+                          {part.views} просмотров • {part.category} • {part.condition}
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handlePartStatusChange(part.id, part.status === 'published' ? 'draft' : 'published')}
+                            className="text-xs"
+                          >
+                            {part.status === 'published' ? 'Снять с публикации' : 'Опубликовать'}
+                          </Button>
+                          <div className="flex gap-2">
+                            <Link href={`/parts/${part.id}`}>
+                              <Button size="sm" variant="outline" className="flex-1">
+                                <Eye className="h-3 w-3 lg:h-4 lg:w-4" />
+                              </Button>
+                            </Link>
+                            <Link href={`/dealer/edit-part/${part.id}`}>
+                              <Button size="sm" variant="outline" className="flex-1">
+                                <Edit className="h-3 w-3 lg:h-4 lg:w-4" />
+                              </Button>
+                            </Link>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleDeletePart(part.id)}
+                              className="text-red-600 hover:text-red-700 flex-1"
+                            >
+                              <Trash2 className="h-3 w-3 lg:h-4 lg:w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

@@ -1,6 +1,11 @@
+'use client'
+
 import Link from 'next/link'
+import { useLocale } from '@/contexts/locale-context'
 
 export function Footer() {
+  const { t } = useLocale()
+
   return (
     <footer className="bg-gray-900 text-white py-6 sm:py-8 mt-auto">
       <div className="container mx-auto px-4">
@@ -8,32 +13,32 @@ export function Footer() {
           <div>
             <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">AutoDealer</h3>
             <p className="text-gray-400 text-xs sm:text-sm">
-              Качественные автомобили и запчасти по лучшим ценам
+              {t('footer.tagline')}
             </p>
           </div>
           
           <div>
-            <h4 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Каталог</h4>
+            <h4 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">{t('footer.catalog')}</h4>
             <ul className="space-y-1 sm:space-y-2 text-xs sm:text-sm text-gray-400">
-              <li><Link href="/cars" className="hover:text-white transition-colors">Автомобили</Link></li>
-              <li><Link href="/parts" className="hover:text-white transition-colors">Запчасти</Link></li>
-              <li><Link href="/contacts" className="hover:text-white transition-colors">Контакты</Link></li>
+              <li><Link href="/cars" className="hover:text-white transition-colors">{t('footer.cars')}</Link></li>
+              <li><Link href="/parts" className="hover:text-white transition-colors">{t('footer.parts')}</Link></li>
+              <li><Link href="/contacts" className="hover:text-white transition-colors">{t('footer.contacts')}</Link></li>
             </ul>
           </div>
           
           <div>
-            <h4 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Информация</h4>
+            <h4 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">{t('footer.information')}</h4>
             <ul className="space-y-1 sm:space-y-2 text-xs sm:text-sm text-gray-400">
-              <li><Link href="/about" className="hover:text-white transition-colors">О компании</Link></li>
-              <li><Link href="/warranty" className="hover:text-white transition-colors">Гарантия</Link></li>
-              <li><Link href="/delivery" className="hover:text-white transition-colors">Доставка</Link></li>
+              <li><Link href="/about" className="hover:text-white transition-colors">{t('footer.about')}</Link></li>
+              <li><Link href="/warranty" className="hover:text-white transition-colors">{t('footer.warranty')}</Link></li>
+              <li><Link href="/delivery" className="hover:text-white transition-colors">{t('footer.delivery')}</Link></li>
             </ul>
           </div>
 
         </div>
         
         <div className="border-t border-gray-800 mt-6 sm:mt-8 pt-6 sm:pt-8 text-center text-xs sm:text-sm text-gray-400">
-          <p>&copy; 2025 AutoDealer. Все права защищены.</p>
+          <p>&copy; 2025 AutoDealer. {t('footer.copyright')}</p>
         </div>
       </div>
     </footer>

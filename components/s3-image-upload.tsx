@@ -15,6 +15,7 @@ interface S3ImageUploadProps {
   maxFiles?: number
   className?: string
   existingImages?: string[]
+  autoNotify?: boolean
 }
 
 const uniq = (arr: string[]) => Array.from(new Set(arr.filter(Boolean)))
@@ -25,6 +26,7 @@ const S3ImageUpload: React.FC<S3ImageUploadProps> = ({
   maxFiles = 10,
   className = '',
   existingImages = [],
+  autoNotify = true,
 }) => {
   const { toast } = useToast()
   const fileInputRef = React.useRef<HTMLInputElement>(null)
@@ -40,15 +42,41 @@ const S3ImageUpload: React.FC<S3ImageUploadProps> = ({
 
   // Синхронизация, если родитель перекинул готовый массив (например, при возврате на шаг)
   React.useEffect(() => {
-    setImages(uniq(Array.isArray(existingImages) ? existingImages : []))
+    console.log('🔄 existingImages changed:', existingImages)
+    const newImages = uniq(Array.isArray(existingImages) ? existingImages : [])
+    console.log('🔄 Processed newImages:', newImages)
+    console.log('🔄 Current images:', images)
+    
+    // Синхронизируемся только если:
+    // 1. newImages не пустой И отличается от текущих images
+    // 2. ИЛИ если images пустой И newImages не пустой (первоначальная загрузка)
+    if (newImages.length > 0 && JSON.stringify(newImages) !== JSON.stringify(images)) {
+      console.log('🔄 Syncing images from parent:', newImages)
+      setImages(newImages)
+    } else if (newImages.length === 0 && images.length === 0) {
+      console.log('🔄 No sync needed - both arrays are empty')
+    } else if (newImages.length === 0 && images.length > 0) {
+      console.log('🔄 Skipping sync - parent has empty array but we have images')
+    } else {
+      console.log('🔄 No sync needed - images are the same')
+    }
   }, [existingImages])
 
   // Утилита — безопасно оповестить родителя (вне рендера)
   const notifyParent = React.useCallback((next: string[]) => {
-    if (!onUploadComplete) return
+    if (!onUploadComplete) {
+      console.log('⚠️ No onUploadComplete callback provided')
+      return
+    }
+    // Если autoNotify выключен, НЕ уведомляем родителя автоматически
+    if (!autoNotify) {
+      console.log('🚫 Auto-notify disabled, skipping parent notification')
+      return
+    }
+    console.log('📞 Calling onUploadComplete with:', next)
     // вызываем асинхронно, чтобы не попасть в setState-в-рендер
-    setTimeout(() => onUploadComplete(next), 0)
-  }, [onUploadComplete])
+    queueMicrotask(() => onUploadComplete(next))
+  }, [onUploadComplete, autoNotify])
 
   // Drag'n'Drop
   const handleDragOver = (e: React.DragEvent) => {
@@ -132,12 +160,16 @@ const S3ImageUpload: React.FC<S3ImageUploadProps> = ({
       console.log('📸 Uploaded URLs:', uploadedUrls)
 
       // добавляем к постоянным
-      setImages((prev) => {
-        const next = uniq([...prev, ...uploadedUrls]).slice(0, maxFiles)
-        console.log('📸 Updated images array:', next)
-        notifyParent(next)
-        return next
-      })
+      const nextImages = uniq([...images, ...uploadedUrls]).slice(0, maxFiles)
+      console.log('📸 Updated images array:', nextImages)
+      setImages(nextImages)
+      // Уведомляем родителя только если autoNotify включен
+      if (autoNotify) {
+        console.log('📸 Notifying parent with images:', nextImages)
+        notifyParent(nextImages)
+      } else {
+        console.log('🚫 Auto-notify disabled, parent will be notified manually')
+      }
 
       toast({ title: 'Upload successful', description: `Uploaded ${uploadedUrls.length} images` })
     } catch (err) {
@@ -180,11 +212,12 @@ const S3ImageUpload: React.FC<S3ImageUploadProps> = ({
         return
       }
 
-      setImages((prev) => {
-        const next = prev.filter((_, i) => i !== index)
-        notifyParent(next)
-        return next
-      })
+      const nextImages = images.filter((_, i) => i !== index)
+      setImages(nextImages)
+      // Уведомляем родителя только если autoNotify включен
+      if (autoNotify) {
+        notifyParent(nextImages)
+      }
       toast({ title: 'Image deleted', description: 'Image removed successfully' })
     } catch (err) {
       console.error('Delete error:', err)
@@ -192,8 +225,18 @@ const S3ImageUpload: React.FC<S3ImageUploadProps> = ({
     }
   }
 
+  // Добавляем ref для доступа к методам компонента
+  const componentRef = React.useRef<{ getImages: () => string[] }>({
+    getImages: () => images
+  })
+
+  // Обновляем ref при изменении images
+  React.useEffect(() => {
+    componentRef.current.getImages = () => images
+  }, [images])
+
   return (
-    <div className={`space-y-4 ${className}`}>
+    <div className={`space-y-4 ${className}`} ref={componentRef as any}>
       {/* Зона загрузки */}
       <Card
         className={`relative border-2 border-dashed transition-colors ${
@@ -224,6 +267,7 @@ const S3ImageUpload: React.FC<S3ImageUploadProps> = ({
 
             {!isUploading && (
               <Button
+                type="button" 
                 variant="outline"
                 size="sm"
                 onClick={() => fileInputRef.current?.click()}
@@ -244,11 +288,40 @@ const S3ImageUpload: React.FC<S3ImageUploadProps> = ({
       </Card>
 
       {/* Превью и загруженные */}
-      {(previews.length > 0 || images.length > 0) && (
+      {(() => {
+        console.log('🖼️ Rendering images section:', { images: images.length, previews: previews.length, total: images.length + previews.length })
+        return (previews.length > 0 || images.length > 0)
+      })() && (
         <div className="space-y-3">
-          <h3 className="text-sm font-medium text-gray-900">
-            Images ({images.length + previews.length}/{maxFiles})
-          </h3>
+          <div className="flex justify-between items-center">
+            <div>
+              <h3 className="text-sm font-medium text-gray-900">
+                Images ({images.length + previews.length}/{maxFiles})
+              </h3>
+              {!autoNotify && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Нажмите "Сохранить фото" чтобы применить изменения
+                </p>
+              )}
+            </div>
+                         {!autoNotify && onUploadComplete && (
+               <Button
+                 type="button" 
+                 variant="outline"
+                 size="sm"
+                 onClick={() => {
+                   console.log('🔄 Manual update triggered with images:', images)
+                   console.log('🔄 Images type:', typeof images)
+                   console.log('🔄 Images is array:', Array.isArray(images))
+                   console.log('🔄 onUploadComplete type:', typeof onUploadComplete)
+                   onUploadComplete(images)
+                 }}
+                 className="text-xs"
+               >
+                 Сохранить фото
+               </Button>
+             )}
+          </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
             {/* Временные превью (идут первыми) */}
@@ -264,10 +337,12 @@ const S3ImageUpload: React.FC<S3ImageUploadProps> = ({
             ))}
 
             {/* Постоянные картинки */}
-            {images.map((imageUrl, index) => (
-              <div key={`${imageUrl}-${index}`} className="relative group">
-                <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
-                  {imageUrl ? (
+            {images.map((imageUrl, index) => {
+              console.log(`🖼️ Rendering image ${index}:`, imageUrl)
+              return (
+                <div key={`${imageUrl}-${index}`} className="relative group">
+                  <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
+                    {imageUrl ? (
                     <S3Image 
                       src={imageUrl} 
                       alt={`Image ${index + 1}`} 
@@ -282,17 +357,19 @@ const S3ImageUpload: React.FC<S3ImageUploadProps> = ({
                   )}
                 </div>
 
-                <button
-                  onClick={() => handleDeleteUploaded(index)}
-                  className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                  aria-label="Удалить изображение"
-                >
-                  <X className="h-3 w-3" />
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteUploaded(index)}
+                    className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                    aria-label="Удалить изображение"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
 
-                <p className="mt-1 text-xs text-gray-500 truncate">{imageUrl.split('/').pop()}</p>
-              </div>
-            ))}
+                                     <p className="mt-1 text-xs text-gray-500 truncate">{imageUrl.split('/').pop()}</p>
+                 </div>
+               )
+             })}
           </div>
         </div>
       )}

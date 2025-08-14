@@ -21,15 +21,25 @@ const S3Image: React.FC<S3ImageProps> = ({
   className = '',
   fallback = '/placeholder.jpg'
 }) => {
-  const [imageSrc, setImageSrc] = React.useState<string>(src)
+  // Проверяем валидность src
+  const isValidSrc = src && src.trim() !== '' && src !== 'undefined' && src !== 'null'
+  const initialSrc = isValidSrc ? src : fallback
+  
+  const [imageSrc, setImageSrc] = React.useState<string>(initialSrc)
   const [isLoading, setIsLoading] = React.useState(true)
-  const [hasError, setHasError] = React.useState(false)
+  const [hasError, setHasError] = React.useState(!isValidSrc)
 
   React.useEffect(() => {
-    setImageSrc(src)
-    setIsLoading(true)
-    setHasError(false)
-  }, [src])
+    if (isValidSrc) {
+      setImageSrc(src)
+      setIsLoading(true)
+      setHasError(false)
+    } else {
+      setImageSrc(fallback)
+      setHasError(true)
+      setIsLoading(false)
+    }
+  }, [src, isValidSrc, fallback])
 
   const handleImageError = async () => {
     console.log('🖼️ Image error occurred for:', src)
@@ -93,8 +103,7 @@ const S3Image: React.FC<S3ImageProps> = ({
   }
 
   // Проверяем, не истек ли подписанный URL при загрузке компонента
-  React.useEffect(() => {
-    // Если это ключ S3 (без http), используем прокси сразу
+  React.useEffect(() => {    // Если это ключ S3 (без http), используем прокси сразу
     if (!src.startsWith('http')) {
       console.log('🔄 S3 key detected, using proxy:', src)
       const proxyUrl = `/api/images/get?key=${encodeURIComponent(src)}`
@@ -163,6 +172,24 @@ const S3Image: React.FC<S3ImageProps> = ({
   }, [src])
 
   if (hasError) {
+    return (
+      <div 
+        className={`flex items-center justify-center bg-gray-200 ${className}`}
+        style={{ width, height }}
+      >
+        <ImageIcon className="h-8 w-8 text-gray-400" />
+      </div>
+    )
+  }
+
+  // Дополнительная проверка валидности URL перед рендером
+  const isValidImageSrc = imageSrc && 
+    imageSrc.trim() !== '' && 
+    imageSrc !== 'undefined' && 
+    imageSrc !== 'null' &&
+    (imageSrc.startsWith('http') || imageSrc.startsWith('/'))
+
+  if (!isValidImageSrc) {
     return (
       <div 
         className={`flex items-center justify-center bg-gray-200 ${className}`}
