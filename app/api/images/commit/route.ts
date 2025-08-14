@@ -1,6 +1,6 @@
 // app/api/images/commit/route.ts
 import { NextRequest, NextResponse } from 'next/server'
-import { s3Client, BUCKET_NAME, BUCKET_REGION } from '@/lib/s3-config'
+import { s3Client, BUCKET_NAME, BUCKET_REGION, extractS3KeyFromUrl } from '@/lib/s3-config'
 import { CopyObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
 
 export async function POST(request: NextRequest) {
@@ -19,11 +19,15 @@ export async function POST(request: NextRequest) {
     for (const imageUrl of images) {
       try {
         console.log('Processing image:', imageUrl)
-        
-        // Извлекаем ключ S3 из URL
-        const url = new URL(imageUrl)
-        const tempKey = url.pathname.substring(1) // Убираем начальный слеш
-        
+
+        // Извлекаем ключ S3 из URL, поддерживая разные форматы
+        const tempKey = extractS3KeyFromUrl(imageUrl)
+        if (!tempKey) {
+          console.log('Unable to extract S3 key, keeping original URL')
+          committedImages.push(imageUrl)
+          continue
+        }
+
         console.log('Extracted temp key:', tempKey)
 
         // Проверяем, что это временное изображение
@@ -41,13 +45,13 @@ export async function POST(request: NextRequest) {
         console.log('Moving from', tempKey, 'to', permanentKey)
 
         // Копируем файл из временной папки в постоянную
-         const copyCommand = new CopyObjectCommand({
-             Bucket: BUCKET_NAME,
-             // ВАЖНО: ведущий слэш и encodeURIComponent
-             CopySource: `/${BUCKET_NAME}/${encodeURIComponent(tempKey)}`,
-             Key: permanentKey,
-             MetadataDirective: 'COPY',
-           })
+        const copyCommand = new CopyObjectCommand({
+          Bucket: BUCKET_NAME,
+          // Передаем исходный путь без лишнего экранирования
+          CopySource: `${BUCKET_NAME}/${tempKey}`,
+          Key: permanentKey,
+          MetadataDirective: 'COPY',
+        })
 
         await s3Client.send(copyCommand)
         console.log('File copied successfully')

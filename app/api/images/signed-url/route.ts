@@ -1,6 +1,6 @@
 // app/api/images/signed-url/route.ts
 import { NextRequest, NextResponse } from 'next/server'
-import { getSignedImageUrl } from '@/lib/s3-config'
+import { getSignedImageUrl, extractS3KeyFromUrl } from '@/lib/s3-config'
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,13 +11,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Извлекаем ключ S3 из URL
-    const url = new URL(imageUrl)
-    const key = url.pathname.substring(1) // Убираем начальный слеш
-    
+    const key = extractS3KeyFromUrl(imageUrl)
     if (!key) {
       return NextResponse.json({ success: false, error: 'Invalid image URL' }, { status: 400 })
     }
-
+    
     // Генерируем подписанный URL (действителен 24 часа)
     const signedUrl = await getSignedImageUrl(key, 86400)
     

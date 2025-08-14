@@ -138,10 +138,26 @@ export const validateImageFile = (file: Express.Multer.File): { valid: boolean; 
 export const extractS3KeyFromUrl = (url: string): string | null => {
   try {
     const urlObj = new URL(url)
-    if (urlObj.hostname.includes('s3.amazonaws.com') || urlObj.hostname.includes('.s3.')) {
-      return urlObj.pathname.substring(1) // Убираем начальный слеш
+    const hostname = urlObj.hostname
+
+    const isS3Host =
+      hostname.endsWith('amazonaws.com') &&
+      (hostname.startsWith('s3.') || hostname.includes('.s3.'))
+
+    if (!isS3Host) return null
+
+    let key = urlObj.pathname.replace(/^\/+/,'')
+
+    // Для path-style URL (s3.<region>.amazonaws.com/<bucket>/<key>)
+    if (hostname.startsWith('s3.')) {
+      const firstSlash = key.indexOf('/')
+      key = firstSlash === -1 ? '' : key.substring(firstSlash + 1)
+    } else if (key.startsWith(`${BUCKET_NAME}/`)) {
+      // На случай если имя бакета все же дублируется в пути
+      key = key.substring(BUCKET_NAME.length + 1)
     }
-    return null
+
+    return key || null
   } catch {
     return null
   }

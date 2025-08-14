@@ -15,11 +15,11 @@ const nextConfig = {
     unoptimized: false,
 
     // Старый короткий список (можно оставить для удобства)
-    domains: [
-      'localhost',
-      'autoproject-xi78.onrender.com',
-      'autodealer-images.s3.eu-north-1.amazonaws.com',
-    ],
+    // domains: [
+    //   'localhost',
+    //   'autoproject-xi78.onrender.com',
+    //   'autodealer-images.s3.eu-north-1.amazonaws.com',
+    // ],
 
     // Точный список удалённых источников картинок
     remotePatterns: [

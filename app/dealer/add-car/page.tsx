@@ -114,8 +114,10 @@ export default function AddCarPage() {
           // Заменяем временные URL на постоянные
           const permanentImages = images.map(img => {
             if (img.includes('/temp_')) {
-              const tempKey = img.split('/').pop()
-              const permanentImg = data.images.find((permImg: string) => permImg.includes(tempKey || '')) || img
+               // Берём имя файла без query-параметров, чтобы сопоставить с новым URL
+              const tempFile = img.split('/').pop()?.split('?')[0]
+              const permanentImg =
+                data.images.find((permImg: string) => permImg.includes(tempFile || '')) || img
               console.log('🔄 Replacing temp image:', img, 'with:', permanentImg)
               return permanentImg
             }
