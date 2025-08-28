@@ -1,45 +1,31 @@
 'use client'
 
-import { useState } from 'react'
+import React from 'react'
 import { useRouter } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
-import { ArrowLeft, Save, Upload } from 'lucide-react'
-import Link from 'next/link'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Progress } from '@/components/ui/progress'
+import { Badge } from '@/components/ui/badge'
+import { ArrowLeft, ArrowRight, Save, Eye, Loader2 } from 'lucide-react'
 import S3ImageUpload from '@/components/s3-image-upload'
-
-const categories = [
-  'engine',
-  'transmission', 
-  'brakes',
-  'suspension',
-  'electrical',
-  'body',
-  'interior',
-  'exterior',
-  'wheels',
-  'tires',
-  'other'
-]
-
-const conditions = ['new', 'used', 'refurbished']
-const currencies = ['EUR', 'USD', 'RUB']
-const brands = [
-  'BMW', 'Mercedes-Benz', 'Audi', 'Volkswagen', 'Toyota', 'Honda',
-  'Ford', 'Opel', 'Peugeot', 'Renault', 'Citroen', 'Fiat',
-  'Volvo', 'Saab', 'Skoda', 'Seat', 'Alfa Romeo', 'Lancia'
-]
+import S3Image from '@/components/s3-image'
+import { useLocale } from '@/contexts/locale-context'
+import { getCategoryText, getConditionText, getUIText } from '@/lib/translations'
 
 export default function AddPartPage() {
   const router = useRouter()
-  const [loading, setLoading] = useState(false)
-  const [photos, setPhotos] = useState<string[]>([])
-  const [formData, setFormData] = useState({
+  const { locale } = useLocale()
+  const [currentStep, setCurrentStep] = React.useState(1)
+  const [loading, setLoading] = React.useState(false)
+  const [error, setError] = React.useState('')
+  const [savedPartId, setSavedPartId] = React.useState<string | null>(null)
+
+  const [partData, setPartData] = React.useState({
     name: '',
     brand: '',
     model: '',
@@ -52,399 +38,319 @@ export default function AddPartPage() {
     negotiable: false,
     city: '',
     description: '',
-    status: 'published'
+    photos: [] as string[],
+    status: 'draft',
   })
 
-  const handlePhotosUpload = (uploadedPhotos: string[]) => {
-    console.log('📸 Photos uploaded in add-part:', uploadedPhotos)
-    console.log('📸 Photos type:', typeof uploadedPhotos)
-    console.log('📸 Photos is array:', Array.isArray(uploadedPhotos))
-    
-    // Обновляем фотографии только если передан валидный массив
-    if (Array.isArray(uploadedPhotos)) {
-      console.log('📸 Setting photos state:', uploadedPhotos)
-      setPhotos(uploadedPhotos)
+  const steps = [
+    { id: 1, title: getUIText('step1', locale), description: getUIText('step1Desc', locale) },
+    { id: 2, title: getUIText('step2', locale), description: getUIText('step2Desc', locale) },
+    { id: 3, title: getUIText('step3', locale), description: getUIText('step3Desc', locale) },
+  ]
+
+  const categories = [
+    'engine',
+    'transmission', 
+    'brakes',
+    'suspension',
+    'electrical',
+    'body',
+    'interior',
+    'exterior',
+    'wheels',
+    'tires',
+    'other'
+  ]
+
+  const conditions = ['new', 'used', 'refurbished']
+  const currencies = ['EUR', 'USD', 'RUB']
+
+  const handleInputChange = React.useCallback((field: string, value: any) => {
+    if (field === 'photos') {
+      const next = Array.isArray(value) ? value : []
+      setPartData((prev) => ({ ...prev, photos: next }))
     } else {
-      console.log('⚠️ Invalid photos data received:', uploadedPhotos)
+      setPartData((prev) => ({ ...prev, [field]: value }))
     }
-  }
+  }, [])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    console.log('📝 Form data before submission:', formData)
-    console.log('📸 Photos before submission:', photos)
-    
-    // Валидация обязательных полей
-    if (!formData.name || !formData.brand || !formData.model || !formData.price || !formData.city || !formData.description) {
-      alert('Пожалуйста, заполните все обязательные поля')
-      return
-    }
+  const handlePhotosUpdate = React.useCallback((images: string[]) => {
+    console.log('📸 handlePhotosUpdate called with:', images)
+    setPartData((prev) => ({ ...prev, photos: Array.isArray(images) ? images : [] }))
+  }, [])
 
+  const nextStep = () => setCurrentStep((s) => Math.min(3, s + 1))
+  const prevStep = () => setCurrentStep((s) => Math.max(1, s - 1))
+
+  const savePart = async (status: 'draft' | 'published') => {
     setLoading(true)
+    setError('')
 
     try {
-      const requestBody = {
-        ...formData,
-        yearFrom: formData.yearFrom ? parseInt(formData.yearFrom) : null,
-        yearTo: formData.yearTo ? parseInt(formData.yearTo) : null,
-        price: parseFloat(formData.price),
-        photos
+      const finalPartData = {
+        ...partData,
+        status,
+        yearFrom: partData.yearFrom ? parseInt(partData.yearFrom) : null,
+        yearTo: partData.yearTo ? parseInt(partData.yearTo) : null,
+        price: parseFloat(partData.price),
       }
-      
-      console.log('📤 Sending request body:', requestBody)
-      
+
       const response = await fetch('/api/parts', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody)
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(finalPartData),
       })
+      const data = await response.json()
 
-      console.log('📥 Response status:', response.status)
-      
       if (response.ok) {
-        const result = await response.json()
-        console.log('✅ Success response:', result)
-        alert('Запчасть успешно добавлена!')
+        setSavedPartId(data.part.id)
         router.push('/dealer')
       } else {
-        const error = await response.json()
-        console.error('❌ Error response:', error)
-        alert(`Ошибка: ${error.error}`)
+        setError(data.error || 'Ошибка при сохранении запчасти')
       }
-    } catch (error) {
-      console.error('Error creating part:', error)
-      alert('Ошибка при создании запчасти')
+    } catch (err) {
+      console.error('Ошибка при сохранении:', err)
+      setError('Ошибка при сохранении запчасти')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-  }
+  const saveDraft = () => savePart('draft')
+  const publishPart = () => savePart('published')
+  const progress = (currentStep / steps.length) * 100
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-4 sm:py-8">
         <div className="max-w-4xl mx-auto">
-          {/* Заголовок */}
-          <div className="mb-8">
-            <Link href="/dealer" className="inline-flex items-center text-blue-600 hover:text-blue-700 mb-4">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Назад к панели
-            </Link>
-            <h1 className="text-3xl font-bold text-gray-900">Добавить запчасть</h1>
-            <p className="text-gray-600 mt-2">Заполните информацию о запчасти</p>
-          </div>
-
-          <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Основная информация */}
-              <div className="lg:col-span-2 space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Основная информация</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <Label htmlFor="name">Название запчасти *</Label>
-                      <Input
-                        id="name"
-                        value={formData.name}
-                        onChange={(e) => handleInputChange('name', e.target.value)}
-                        placeholder="Например: Двигатель BMW N54"
-                        required
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="brand">Марка автомобиля *</Label>
-                        <Input
-                          id="brand"
-                          value={formData.brand}
-                          onChange={(e) => handleInputChange('brand', e.target.value)}
-                          placeholder="Например: BMW"
-                          required
-                        />
-                      </div>
-
-                      <div>
-                        <Label htmlFor="model">Модель автомобиля *</Label>
-                        <Input
-                          id="model"
-                          value={formData.model}
-                          onChange={(e) => handleInputChange('model', e.target.value)}
-                          placeholder="Например: 335i"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="yearFrom">Год от</Label>
-                        <Input
-                          id="yearFrom"
-                          type="number"
-                          value={formData.yearFrom}
-                          onChange={(e) => handleInputChange('yearFrom', e.target.value)}
-                          placeholder="2000"
-                          min="1900"
-                          max="2030"
-                        />
-                      </div>
-
-                      <div>
-                        <Label htmlFor="yearTo">Год до</Label>
-                        <Input
-                          id="yearTo"
-                          type="number"
-                          value={formData.yearTo}
-                          onChange={(e) => handleInputChange('yearTo', e.target.value)}
-                          placeholder="2020"
-                          min="1900"
-                          max="2030"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="category">Категория *</Label>
-                        <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Выберите категорию" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {categories.map(category => (
-                              <SelectItem key={category} value={category}>
-                                {category === 'engine' ? 'Двигатель' :
-                                 category === 'transmission' ? 'Трансмиссия' :
-                                 category === 'brakes' ? 'Тормоза' :
-                                 category === 'suspension' ? 'Подвеска' :
-                                 category === 'electrical' ? 'Электрика' :
-                                 category === 'body' ? 'Кузов' :
-                                 category === 'interior' ? 'Салон' :
-                                 category === 'exterior' ? 'Внешний вид' :
-                                 category === 'wheels' ? 'Колеса' :
-                                 category === 'tires' ? 'Шины' : 'Другое'}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="condition">Состояние *</Label>
-                        <Select value={formData.condition} onValueChange={(value) => handleInputChange('condition', value)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Выберите состояние" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {conditions.map(condition => (
-                              <SelectItem key={condition} value={condition}>
-                                {condition === 'new' ? 'Новое' :
-                                 condition === 'used' ? 'Б/у' : 'Восстановленное'}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="description">Описание *</Label>
-                      <Textarea
-                        id="description"
-                        value={formData.description}
-                        onChange={(e) => handleInputChange('description', e.target.value)}
-                        placeholder="Подробное описание запчасти, состояние, комплектация..."
-                        rows={4}
-                        required
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Цена и контакты */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Цена и контакты</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <Label htmlFor="price">Цена *</Label>
-                        <Input
-                          id="price"
-                          type="number"
-                          value={formData.price}
-                          onChange={(e) => handleInputChange('price', e.target.value)}
-                          placeholder="1000"
-                          min="0"
-                          step="0.01"
-                          required
-                        />
-                      </div>
-
-                      <div>
-                        <Label htmlFor="currency">Валюта</Label>
-                        <Select value={formData.currency} onValueChange={(value) => handleInputChange('currency', value)}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {currencies.map(currency => (
-                              <SelectItem key={currency} value={currency}>{currency}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="city">Город *</Label>
-                        <Input
-                          id="city"
-                          value={formData.city}
-                          onChange={(e) => handleInputChange('city', e.target.value)}
-                          placeholder="Москва"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="negotiable"
-                        checked={formData.negotiable}
-                        onCheckedChange={(checked) => handleInputChange('negotiable', checked as boolean)}
-                      />
-                      <Label htmlFor="negotiable">Цена договорная</Label>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Боковая панель */}
-              <div className="space-y-6">
-                                 {/* Фотографии */}
-                 <Card>
-                   <CardHeader>
-                     <CardTitle>Фотографии</CardTitle>
-                   </CardHeader>
-                   <CardContent>
-                                           <S3ImageUpload
-                        carId="new"
-                        onUploadComplete={handlePhotosUpload}
-                        maxFiles={10}
-                        className="w-full"
-                        autoNotify={false}
-                        data-s3-upload="true"
-                      />
-                                           <p className="text-xs text-gray-500 mt-2">
-                        Выбрано фотографий: {photos.length}
-                        {photos.length > 0 && (
-                          <span className="ml-2">({photos.length} фото загружено)</span>
-                        )}
-                      </p>
-                      
-                      {/* Превью загруженных фотографий */}
-                      {photos.length > 0 && (
-                        <div className="mt-3">
-                          <p className="text-xs font-medium text-gray-700 mb-2">Загруженные фотографии:</p>
-                          <div className="grid grid-cols-3 gap-2">
-                            {photos.map((photo, index) => (
-                              <div key={index} className="aspect-square rounded-lg overflow-hidden bg-gray-100">
-                                <img 
-                                  src={photo} 
-                                  alt={`Фото ${index + 1}`}
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      
-                      <div className="flex gap-2 mt-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            console.log('🔍 Current photos state:', photos)
-                            console.log('🔍 Current form data:', formData)
-                          }}
-                          className="flex-1 text-xs"
-                        >
-                          Проверить состояние
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            // Принудительно обновляем фотографии из компонента
-                            const s3Component = document.querySelector('[data-s3-upload]') as any
-                            if (s3Component && s3Component.getImages) {
-                              const currentImages = s3Component.getImages()
-                              console.log('🔄 Force updating photos from component:', currentImages)
-                              setPhotos(currentImages)
-                            }
-                          }}
-                          className="flex-1 text-xs"
-                        >
-                          Обновить фото
-                        </Button>
-                      </div>
-                   </CardContent>
-                 </Card>
-
-                {/* Статус публикации */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Публикация</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <Label htmlFor="status">Статус</Label>
-                      <Select value={formData.status} onValueChange={(value) => handleInputChange('status', value)}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="published">Опубликовать</SelectItem>
-                          <SelectItem value="draft">Черновик</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      disabled={loading}
-                    >
-                      {loading ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                          Сохранение...
-                        </>
-                      ) : (
-                        <>
-                          <Save className="h-4 w-4 mr-2" />
-                          Сохранить запчасть
-                        </>
-                      )}
-                    </Button>
-                  </CardContent>
-                </Card>
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 gap-4">
+            <div className="flex items-center space-x-3 sm:space-x-4">
+              <Button variant="outline" onClick={() => router.back()} size="sm" className="text-xs sm:text-sm">
+                <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                {getUIText('back', locale)}
+              </Button>
+              <div>
+                <h1 className="text-xl sm:text-2xl font-bold">{getUIText('addPart', locale)}</h1>
+                <p className="text-sm sm:text-base text-gray-600">{getUIText('step', locale)} {currentStep} {getUIText('of', locale)} 3</p>
               </div>
             </div>
-          </form>
+            <Button variant="outline" onClick={saveDraft} disabled={loading} size="sm" className="text-xs sm:text-sm w-full sm:w-auto">
+              {loading ? <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 animate-spin" /> : <Save className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />}
+              {getUIText('saveDraft', locale)}
+            </Button>
+          </div>
+
+          {error && (
+            <div className="mb-4 sm:mb-6 bg-red-100 border border-red-400 text-red-700 px-3 sm:px-4 py-2 sm:py-3 rounded text-sm">
+              <strong>{getUIText('error', locale)}:</strong> {error}
+            </div>
+          )}
+
+          {/* Progress */}
+          <div className="mb-6 sm:mb-8">
+            <Progress value={progress} className="mb-3 sm:mb-4" />
+            <div className="hidden sm:flex justify-between text-sm">
+              {steps.map((step) => (
+                <div key={step.id} className={`text-center ${currentStep >= step.id ? 'text-blue-600' : 'text-gray-400'}`}>
+                  <div className="font-medium">{step.title}</div>
+                  <div className="text-xs">{step.description}</div>
+                </div>
+              ))}
+            </div>
+            <div className="sm:hidden text-center">
+              <div className="text-sm font-medium text-blue-600">{steps[currentStep - 1].title}</div>
+              <div className="text-xs text-gray-500">{steps[currentStep - 1].description}</div>
+            </div>
+          </div>
+
+          {/* Content */}
+          <Card>
+            <CardHeader className="pb-3 sm:pb-6">
+              <CardTitle className="text-lg sm:text-xl">{steps[currentStep - 1].title}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 sm:space-y-6">
+              {currentStep === 1 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                  <div>
+                    <Label htmlFor="name">{getUIText('partName', locale)} *</Label>
+                    <Input 
+                      id="name" 
+                      value={partData.name} 
+                      onChange={(e) => handleInputChange('name', e.target.value)}
+                      placeholder={getUIText('partNamePlaceholder', locale)}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="brand">{getUIText('carBrand', locale)} *</Label>
+                    <Input 
+                      id="brand" 
+                      value={partData.brand} 
+                      onChange={(e) => handleInputChange('brand', e.target.value)}
+                      placeholder={getUIText('carBrandPlaceholder', locale)}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="model">{getUIText('carModel', locale)} *</Label>
+                    <Input 
+                      id="model" 
+                      value={partData.model} 
+                      onChange={(e) => handleInputChange('model', e.target.value)}
+                      placeholder={getUIText('carModelPlaceholder', locale)}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="category">{getUIText('category', locale)} *</Label>
+                    <Select value={partData.category || undefined} onValueChange={(v) => handleInputChange('category', v)}>
+                      <SelectTrigger><SelectValue placeholder={getUIText('selectCategory', locale)} /></SelectTrigger>
+                      <SelectContent>
+                        {categories.map(category => (
+                          <SelectItem key={category} value={category}>
+                            {getCategoryText(category, locale)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="condition">{getUIText('condition', locale)} *</Label>
+                    <Select value={partData.condition || undefined} onValueChange={(v) => handleInputChange('condition', v)}>
+                      <SelectTrigger><SelectValue placeholder={getUIText('selectCondition', locale)} /></SelectTrigger>
+                      <SelectContent>
+                        {conditions.map(condition => (
+                          <SelectItem key={condition} value={condition}>
+                            {getConditionText(condition, locale)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="yearFrom">{getUIText('yearFrom', locale)}</Label>
+                    <Input 
+                      id="yearFrom" 
+                      type="number" 
+                      value={partData.yearFrom} 
+                      onChange={(e) => handleInputChange('yearFrom', e.target.value)}
+                      placeholder="2000"
+                      min="1900"
+                      max="2030"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="yearTo">{getUIText('yearTo', locale)}</Label>
+                    <Input 
+                      id="yearTo" 
+                      type="number" 
+                      value={partData.yearTo} 
+                      onChange={(e) => handleInputChange('yearTo', e.target.value)}
+                      placeholder="2020"
+                      min="1900"
+                      max="2030"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="city">{getUIText('city', locale)} *</Label>
+                    <Input 
+                      id="city" 
+                      value={partData.city} 
+                      onChange={(e) => handleInputChange('city', e.target.value)}
+                      placeholder="Москва"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {currentStep === 2 && (
+                <div className="space-y-4 sm:space-y-6">
+                  <S3ImageUpload
+                    carId={savedPartId || 'new'}
+                    existingImages={partData.photos}
+                    onUploadComplete={handlePhotosUpdate}
+                    maxFiles={10}
+                    className="w-full"
+                  />
+                </div>
+              )}
+
+              {currentStep === 3 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                  <div>
+                    <Label htmlFor="price">{getUIText('price', locale)} *</Label>
+                    <Input 
+                      id="price" 
+                      type="number" 
+                      value={partData.price} 
+                      onChange={(e) => handleInputChange('price', e.target.value)}
+                      placeholder="1000"
+                      min="0"
+                      step="0.01"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="currency">{getUIText('currency', locale)} *</Label>
+                    <Select value={partData.currency || undefined} onValueChange={(v) => handleInputChange('currency', v)}>
+                      <SelectTrigger><SelectValue placeholder={getUIText('selectCurrency', locale)} /></SelectTrigger>
+                      <SelectContent>
+                        {currencies.map(currency => (
+                          <SelectItem key={currency} value={currency}>{currency}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="negotiable" 
+                        checked={partData.negotiable} 
+                        onCheckedChange={(v) => handleInputChange('negotiable', v)} 
+                      />
+                      <Label htmlFor="negotiable">{getUIText('negotiablePrice', locale)}</Label>
+                    </div>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label htmlFor="description">{getUIText('partDescription', locale)} *</Label>
+                    <Textarea 
+                      id="description" 
+                      value={partData.description} 
+                      onChange={(e) => handleInputChange('description', e.target.value)}
+                      placeholder={getUIText('partDescriptionPlaceholder', locale)}
+                      rows={4}
+                    />
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Navigation */}
+          <div className="flex flex-col sm:flex-row justify-between mt-6 sm:mt-8 gap-3 sm:gap-4">
+            <Button variant="outline" onClick={prevStep} disabled={currentStep === 1} className="w-full sm:w-auto text-sm sm:text-base">
+              <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+              {getUIText('back', locale)}
+            </Button>
+
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+              {currentStep < 3 ? (
+                <Button onClick={nextStep} className="w-full sm:w-auto text-sm sm:text-base">
+                  {getUIText('next', locale)}
+                  <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2" />
+                </Button>
+              ) : (
+                <>
+                  <Button variant="outline" onClick={saveDraft} disabled={loading} className="w-full sm:w-auto text-sm sm:text-base">
+                    {loading ? <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 animate-spin" /> : <Save className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />}
+                    {getUIText('saveDraft', locale)}
+                  </Button>
+                  <Button onClick={publishPart} disabled={loading} className="w-full sm:w-auto text-sm sm:text-base">
+                    {loading ? <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 animate-spin" /> : <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />}
+                    {getUIText('publishPart', locale)}
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

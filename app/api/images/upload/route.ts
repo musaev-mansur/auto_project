@@ -1,6 +1,6 @@
 // app/api/images/upload/route.ts
 import { NextRequest, NextResponse } from 'next/server'
-import { uploadImageToS3, BUCKET_NAME, BUCKET_REGION, s3Client } from '@/lib/s3-config'
+import { uploadImageToS3, BUCKET_NAME, BUCKET_REGION } from '@/lib/s3-config'
 
 type Uploaded = {
   key: string
@@ -16,7 +16,6 @@ function extFromName(name: string) {
 }
 
 function safeBaseName(name: string) {
-  // без расширения, только безопасные символы
   return name
     .replace(/\.[^/.?#]+(?=$|[?#])/i, '')
     .replace(/[^a-z0-9_-]+/gi, '-')
@@ -25,26 +24,24 @@ function safeBaseName(name: string) {
     .toLowerCase() || 'img'
 }
 
-const MAX_FILE_SIZE = 15 * 1024 * 1024 // 15 MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
 const ALLOWED_TYPES = new Set([
   'image/jpeg',
+  'image/jpg',
   'image/png',
   'image/webp',
-  'image/avif',
-  'image/heic',
-  'image/heif',
 ])
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('📤 Upload request received')
+    console.log('📤 Получен запрос на загрузку изображений')
     const form = await request.formData()
     const carIdRaw = String(form.get('carId') ?? 'new').trim()
     const batchIdRaw = String(form.get('batchId') ?? '').trim()
     const batchId = batchIdRaw || `b_${Date.now()}`
     const files = form.getAll('images').filter(Boolean) as File[]
     
-    console.log('📋 Upload data:', { 
+    console.log('📋 Данные загрузки:', { 
       carIdRaw, 
       batchIdRaw, 
       batchId, 
@@ -53,81 +50,91 @@ export async function POST(request: NextRequest) {
     })
 
     if (!files.length) {
-      return NextResponse.json({ success: false, error: 'No files' }, { status: 400 })
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Файлы не найдены' 
+      }, { status: 400 })
     }
 
-    // ЕДИНЫЙ префикс на всю загрузку
-    const prefix = carIdRaw === 'new'
-      ? `cars/temp_${batchId}/`
-      : `cars/${carIdRaw}/`
+    // Префикс для папки в S3 - всегда используем постоянную папку
+    const prefix = `cars/${carIdRaw}/`
     
-    console.log('📁 Upload prefix:', prefix)
+    console.log('📁 Префикс загрузки:', prefix)
 
     const uploaded: Uploaded[] = []
 
     for (const file of files) {
-      console.log('📄 Processing file:', file.name, 'Size:', file.size, 'Type:', file.type)
+      console.log('📄 Обработка файла:', file.name, 'Размер:', file.size, 'Тип:', file.type)
       
-      if (!(file instanceof File)) {
-        console.log('⚠️ Not a File instance, skipping')
+      // Проверяем, что это файл (в Node.js нет глобального File)
+      if (!file || typeof file !== 'object' || !('name' in file) || !('size' in file) || !('type' in file)) {
+        console.log('⚠️ Не является файлом, пропускаем')
         continue
       }
       
+      // Проверка размера
       if (file.size > MAX_FILE_SIZE) {
-        console.log('❌ File too large:', file.name, file.size)
-        return NextResponse.json({ success: false, error: `File ${file.name} exceeds ${MAX_FILE_SIZE} bytes` }, { status: 413 })
+        console.log('❌ Файл слишком большой:', file.name, file.size)
+        return NextResponse.json({ 
+          success: false, 
+          error: `Файл ${file.name} превышает ${MAX_FILE_SIZE / 1024 / 1024}MB` 
+        }, { status: 413 })
       }
       
+      // Проверка типа
       const ctype = file.type || 'application/octet-stream'
-      if (ctype.startsWith('image/') && !ALLOWED_TYPES.has(ctype)) {
-        console.log('❌ Unsupported image type:', ctype)
-        return NextResponse.json({ success: false, error: `Unsupported image type: ${ctype}` }, { status: 415 })
+      if (!ALLOWED_TYPES.has(ctype)) {
+        console.log('❌ Неподдерживаемый тип изображения:', ctype)
+        return NextResponse.json({ 
+          success: false, 
+          error: `Неподдерживаемый тип изображения: ${ctype}` 
+        }, { status: 415 })
       }
 
+      // Генерация имени файла
       const ext = extFromName(file.name)
       const base = safeBaseName(file.name)
       const fname = `${base}_${Date.now()}_${Math.random().toString(36).slice(2,8)}.${ext}`
       const key = `${prefix}${fname}`
       
-      console.log('🔑 Generated key:', key)
+      console.log('🔑 Сгенерированный ключ:', key)
 
       try {
+        // Конвертация файла в буфер
         const arrayBuf = await file.arrayBuffer()
         const buf = Buffer.from(arrayBuf)
-        console.log('📦 File converted to buffer, size:', buf.length)
+        console.log('📦 Файл конвертирован в буфер, размер:', buf.length)
 
-        // используем ваш helper
-        console.log('☁️ Uploading to S3...')
+        // Загрузка в S3
+        console.log('☁️ Загрузка в S3...')
         const res = await uploadImageToS3(buf, key, ctype)
-        console.log('✅ S3 upload result:', res)
+        console.log('✅ Результат загрузки в S3:', res)
         
         if (!res.success) {
-          console.error('❌ Upload failed:', res.error)
-          throw new Error(res.error || 'Upload failed')
+          console.error('❌ Ошибка загрузки:', res.error)
+          throw new Error(res.error || 'Ошибка загрузки')
         }
         
-        // Генерируем подписанный URL для доступа к файлу
-        console.log('🔗 Generating signed URL for:', key)
-        const { getSignedImageUrl } = await import('@/lib/s3-config')
-        const signedUrl = await getSignedImageUrl(key, 86400) // 24 часа
+        // Генерация URL для доступа к файлу
+        console.log('🔗 Генерация URL для:', key)
+        const imageUrl = `https://${BUCKET_NAME}.s3.${BUCKET_REGION}.amazonaws.com/${key}`
         
-        // предполагаем, что helper возвращает { key, url }
         const uploadResult = {
           key: res.key ?? key,
-          url: signedUrl, // Используем подписанный URL
+          url: imageUrl,
           size: file.size,
           contentType: ctype,
         }
         uploaded.push(uploadResult)
-        console.log('📝 Added to uploaded array:', uploadResult)
+        console.log('📝 Добавлено в массив загруженных:', uploadResult)
         
       } catch (uploadError) {
-        console.error('❌ Error uploading file:', file.name, uploadError)
+        console.error('❌ Ошибка загрузки файла:', file.name, uploadError)
         throw uploadError
       }
     }
 
-    console.log('🎉 Upload completed successfully:', {
+    console.log('🎉 Загрузка завершена успешно:', {
       uploadedCount: uploaded.length,
       uploadedImages: uploaded.map(u => ({ key: u.key, url: u.url }))
     })
@@ -138,7 +145,10 @@ export async function POST(request: NextRequest) {
       images: uploaded,
     })
   } catch (err) {
-    console.error('Upload error:', err)
-    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 })
+    console.error('Ошибка загрузки:', err)
+    return NextResponse.json({ 
+      success: false, 
+      error: 'Внутренняя ошибка сервера' 
+    }, { status: 500 })
   }
 }

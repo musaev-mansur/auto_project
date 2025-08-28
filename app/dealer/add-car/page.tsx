@@ -80,59 +80,6 @@ export default function AddCarPage() {
   const prevStep = () => setCurrentStep((s) => Math.max(1, s - 1))
 
   const saveCar = async (status: 'draft' | 'published') => {
-    async function commitImages(carId: string, images: string[]) {
-      try {
-        console.log('🔄 Starting commit images for carId:', carId)
-        console.log('🔄 Images to commit:', images)
-        
-        // Фильтруем только временные изображения (содержащие /temp_)
-        const tempImages = images.filter(img => img.includes('/temp_'))
-        console.log('🔄 Temp images found:', tempImages)
-        
-        if (tempImages.length === 0) {
-          console.log('🔄 No temp images to commit, returning original images')
-          return images
-        }
-
-        console.log('🔄 Sending commit request...')
-        const res = await fetch('/api/images/commit', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ carId, images: tempImages })
-        })
-        
-        console.log('🔄 Commit response status:', res.status)
-        
-        if (!res.ok) {
-          console.error('Commit images failed:', res.status, await res.text())
-          return images
-        }
-        
-        const data = await res.json()
-        console.log('🔄 Commit response data:', data)
-        
-        if (data?.success && Array.isArray(data.images)) {
-          // Заменяем временные URL на постоянные
-          const permanentImages = images.map(img => {
-            if (img.includes('/temp_')) {
-               // Берём имя файла без query-параметров, чтобы сопоставить с новым URL
-              const tempFile = img.split('/').pop()?.split('?')[0]
-              const permanentImg =
-                data.images.find((permImg: string) => permImg.includes(tempFile || '')) || img
-              console.log('🔄 Replacing temp image:', img, 'with:', permanentImg)
-              return permanentImg
-            }
-            return img
-          })
-          console.log('🔄 Final permanent images:', permanentImages)
-          setCarData(prev => ({ ...prev, photos: permanentImages }))
-          return permanentImages
-        }
-      } catch (error) {
-        console.error('Error committing images:', error)
-      }
-      return images
-    }
-
     setLoading(true)
     setError('')
 
@@ -152,23 +99,6 @@ export default function AddCarPage() {
 
       if (response.ok) {
         setSavedCarId(data.car.id)
-
-        if (carData.photos.length > 0) {
-          // Коммитим временные изображения в постоянные
-          const committedImages = await commitImages(data.car.id, carData.photos)
-          
-          // Обновляем только поле photos
-          const updateResponse = await fetch(`/api/cars/${data.car.id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ photos: committedImages }),
-          })
-          if (!updateResponse.ok) {
-            const updateError = await updateResponse.json().catch(() => ({}))
-            console.error('Ошибка при обновлении изображений:', updateResponse.status, updateError)
-          }
-        }
-
         router.push('/dealer')
       } else {
         setError(data.error || 'Ошибка при сохранении автомобиля')

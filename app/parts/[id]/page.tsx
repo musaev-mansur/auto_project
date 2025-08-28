@@ -22,7 +22,7 @@ import {
   Edit
 } from 'lucide-react'
 import { useLocale } from '@/contexts/locale-context'
-import { getConditionText } from '@/lib/translations'
+import { getConditionText, getCategoryText, getUIText } from '@/lib/translations'
 import { useAuth } from '@/contexts/auth-context'
 import Link from 'next/link'
 
@@ -154,14 +154,14 @@ export default function PartDetailPage() {
           <div className="text-center">
             <div className="text-gray-400 text-6xl mb-4">🔧</div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              {locale === 'ru' ? 'Запчасть не найдена' : 'Part not found'}
+              {getUIText('partNotFound', locale)}
             </h1>
             <p className="text-gray-600 mb-4">
-              {error || (locale === 'ru' ? 'Запрашиваемая запчасть не существует' : 'The requested part does not exist')}
+              {error || getUIText('partNotExists', locale)}
             </p>
             <Button asChild>
               <a href="/parts">
-                {locale === 'ru' ? 'Вернуться к списку' : 'Back to list'}
+                {getUIText('backToList', locale)}
               </a>
             </Button>
           </div>
@@ -181,13 +181,13 @@ export default function PartDetailPage() {
           <ol className="flex items-center space-x-2 text-sm text-gray-600">
             <li>
               <a href="/" className="hover:text-blue-600">
-                {locale === 'ru' ? 'Главная' : 'Home'}
+                {getUIText('home', locale)}
               </a>
             </li>
             <li>/</li>
             <li>
               <a href="/parts" className="hover:text-blue-600">
-                {locale === 'ru' ? 'Запчасти' : 'Parts'}
+                {getUIText('parts', locale)}
               </a>
             </li>
             <li>/</li>
@@ -223,7 +223,7 @@ export default function PartDetailPage() {
                 </div>
                 {part.negotiable && (
                   <Badge variant="secondary" className="bg-orange-100 text-orange-800">
-                    {locale === 'ru' ? 'Торг' : 'Negotiable'}
+                    {getUIText('negotiable', locale)}
                   </Badge>
                 )}
               </div>
@@ -235,7 +235,7 @@ export default function PartDetailPage() {
                 {getConditionText(part.condition, locale)}
               </Badge>
               <Badge variant="outline">
-                {getCategoryIcon(part.category)} {part.category}
+                {getCategoryIcon(part.category)} {getCategoryText(part.category, locale)}
               </Badge>
             </div>
 
@@ -244,7 +244,7 @@ export default function PartDetailPage() {
               <Button asChild className="w-full text-sm sm:text-base bg-orange-600 hover:bg-orange-700" size="sm">
                 <Link href={`/dealer/edit-part/${part.id}`}>
                   <Edit className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                  {locale === 'ru' ? 'Редактировать' : 'Edit'}
+                  {getUIText('edit', locale)}
                 </Link>
               </Button>
             )}
@@ -252,13 +252,13 @@ export default function PartDetailPage() {
               <Button size="lg" className="flex-1 bg-green-600 hover:bg-green-700">
                 <MessageCircle className="h-5 w-5 mr-2" />
                 <a href={`https://wa.me/+32487250651?text=Здравствуйте! Интересует запчасть: ${part.name}`}>
-                  {locale === 'ru' ? 'Написать в WhatsApp' : 'WhatsApp'}
+                  {getUIText('whatsapp', locale)}
                 </a>
               </Button>
               <Button variant="outline" size="lg" asChild>
                 <a href="tel:+32487250651">
                   <Phone className="h-5 w-5 mr-2" />
-                  {locale === 'ru' ? 'Позвонить' : 'Call'}
+                  {getUIText('call', locale)}
                 </a>
               </Button>
             </div>
@@ -268,7 +268,7 @@ export default function PartDetailPage() {
             {/* Описание */}
             <div>
               <h2 className="text-xl font-semibold text-gray-900 mb-3">
-                {locale === 'ru' ? 'Описание' : 'Description'}
+                {getUIText('description', locale)}
               </h2>
               <p className="text-gray-700 whitespace-pre-wrap">
                 {part.description}
@@ -281,34 +281,34 @@ export default function PartDetailPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">
-                  {locale === 'ru' ? 'Характеристики' : 'Specifications'}
+                  {getUIText('specifications', locale)}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">{locale === 'ru' ? 'Бренд' : 'Brand'}</span>
+                  <span className="text-gray-600">{getUIText('brand', locale)}</span>
                   <span className="font-medium">{part.brand}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">{locale === 'ru' ? 'Модель' : 'Model'}</span>
+                  <span className="text-gray-600">{getUIText('model', locale)}</span>
                   <span className="font-medium">{part.model}</span>
                 </div>
                 {part.yearFrom && part.yearTo && (
                   <div className="flex justify-between">
-                    <span className="text-gray-600">{locale === 'ru' ? 'Годы' : 'Years'}</span>
+                    <span className="text-gray-600">{getUIText('year', locale)}</span>
                     <span className="font-medium">{part.yearFrom} - {part.yearTo}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-gray-600">{locale === 'ru' ? 'Категория' : 'Category'}</span>
-                  <span className="font-medium">{getCategoryIcon(part.category)} {part.category}</span>
+                  <span className="text-gray-600">{getUIText('category', locale)}</span>
+                  <span className="font-medium">{getCategoryIcon(part.category)} {getCategoryText(part.category, locale)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">{locale === 'ru' ? 'Состояние' : 'Condition'}</span>
+                  <span className="text-gray-600">{getUIText('condition', locale)}</span>
                   <span className="font-medium">{getConditionText(part.condition, locale)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">{locale === 'ru' ? 'Город' : 'City'}</span>
+                  <span className="text-gray-600">{getUIText('city', locale)}</span>
                   <span className="font-medium">{part.city}</span>
                 </div>
               </CardContent>
@@ -322,7 +322,7 @@ export default function PartDetailPage() {
               </div>
               <div className="flex items-center gap-1">
                 <Eye className="h-4 w-4" />
-                <span>{part.views} {locale === 'ru' ? 'просмотров' : 'views'}</span>
+                <span>{part.views} {getUIText('views', locale)}</span>
               </div>
             </div>
           </div>

@@ -83,9 +83,9 @@ export async function POST(req: NextRequest) {
     for (const field of requiredFields) {
       console.log(`🔍 Checking field '${field}':`, body[field])
       if (!body[field]) {
-        console.log(`❌ Missing required field: ${field}`)
+        console.log(`❌ Отсутствует обязательное поле: ${field}`)
         return NextResponse.json(
-          { error: `Missing required field: ${field}` },
+          { error: `Отсутствует обязательное поле: ${field}` },
           { status: 400 }
         )
       }

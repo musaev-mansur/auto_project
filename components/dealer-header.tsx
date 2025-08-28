@@ -22,6 +22,11 @@ export function DealerHeader() {
           </Link>
           
           <div className="flex items-center space-x-4">
+            {admin && (
+              <span className="text-sm text-gray-600">
+                Админ: {admin.name}
+              </span>
+            )}
             <Link 
               href="/" 
               className="text-gray-600 hover:text-blue-600 text-sm"

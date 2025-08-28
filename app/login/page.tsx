@@ -101,7 +101,7 @@ export default function LoginPage() {
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
                     className="pl-10"
-                    placeholder="admin@example.com"
+                    placeholder="aslan@admin.com"
                   />
                 </div>
               </div>

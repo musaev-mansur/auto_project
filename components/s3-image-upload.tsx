@@ -7,8 +7,6 @@ import { Card } from '@/components/ui/card'
 import { useToast } from '@/hooks/use-toast'
 import S3Image from '@/components/s3-image'
 
-type TempPreview = { id: string; url: string }
-
 interface S3ImageUploadProps {
   carId: string
   onUploadComplete?: (images: string[]) => void
@@ -33,48 +31,25 @@ const S3ImageUpload: React.FC<S3ImageUploadProps> = ({
 
   // Постоянные (загруженные) картинки = URL'ы из S3
   const [images, setImages] = React.useState<string[]>(uniq(existingImages))
-  // Временные превью до окончания аплоада
-  const [previews, setPreviews] = React.useState<TempPreview[]>([])
   const [isDragging, setIsDragging] = React.useState(false)
   const [isUploading, setIsUploading] = React.useState(false)
-  // Единый batchId для всех загрузок в рамках одной сессии
   const [batchId] = React.useState(() => `b_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`)
 
-  // Синхронизация, если родитель перекинул готовый массив (например, при возврате на шаг)
+  // Синхронизация с родительским компонентом
   React.useEffect(() => {
     console.log('🔄 existingImages changed:', existingImages)
     const newImages = uniq(Array.isArray(existingImages) ? existingImages : [])
-    console.log('🔄 Processed newImages:', newImages)
-    console.log('🔄 Current images:', images)
     
-    // Синхронизируемся только если:
-    // 1. newImages не пустой И отличается от текущих images
-    // 2. ИЛИ если images пустой И newImages не пустой (первоначальная загрузка)
     if (newImages.length > 0 && JSON.stringify(newImages) !== JSON.stringify(images)) {
       console.log('🔄 Syncing images from parent:', newImages)
       setImages(newImages)
-    } else if (newImages.length === 0 && images.length === 0) {
-      console.log('🔄 No sync needed - both arrays are empty')
-    } else if (newImages.length === 0 && images.length > 0) {
-      console.log('🔄 Skipping sync - parent has empty array but we have images')
-    } else {
-      console.log('🔄 No sync needed - images are the same')
     }
-  }, [existingImages])
+  }, [existingImages, images])
 
-  // Утилита — безопасно оповестить родителя (вне рендера)
+  // Уведомление родителя
   const notifyParent = React.useCallback((next: string[]) => {
-    if (!onUploadComplete) {
-      console.log('⚠️ No onUploadComplete callback provided')
-      return
-    }
-    // Если autoNotify выключен, НЕ уведомляем родителя автоматически
-    if (!autoNotify) {
-      console.log('🚫 Auto-notify disabled, skipping parent notification')
-      return
-    }
+    if (!onUploadComplete || !autoNotify) return
     console.log('📞 Calling onUploadComplete with:', next)
-    // вызываем асинхронно, чтобы не попасть в setState-в-рендер
     queueMicrotask(() => onUploadComplete(next))
   }, [onUploadComplete, autoNotify])
 
@@ -83,10 +58,12 @@ const S3ImageUpload: React.FC<S3ImageUploadProps> = ({
     e.preventDefault()
     setIsDragging(true)
   }
+  
   const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault()
     setIsDragging(false)
   }
+  
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
     setIsDragging(false)
@@ -94,62 +71,74 @@ const S3ImageUpload: React.FC<S3ImageUploadProps> = ({
     void handleFiles(files)
   }
 
-  // Основная обработка выбора/дропа файлов
+  // Основная обработка файлов
   const handleFiles = async (files: File[]) => {
     if (!files?.length) return
 
-    const totalCount = images.length + previews.length + files.length
+    const totalCount = images.length + files.length
     if (totalCount > maxFiles) {
       toast({
-        title: 'Too many files',
-        description: `Maximum ${maxFiles} files allowed`,
+        title: 'Слишком много файлов',
+        description: `Максимум ${maxFiles} файлов`,
         variant: 'destructive',
       })
       return
     }
 
-    // валидация
+    // Валидация файлов
     const validFiles = files.filter((file) => {
       const isValidType = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)
       const isValidSize = file.size <= 5 * 1024 * 1024
+      
       if (!isValidType) {
-        toast({ title: 'Invalid file type', description: `${file.name} is not a valid image file`, variant: 'destructive' })
+        toast({ 
+          title: 'Неверный тип файла', 
+          description: `${file.name} не является изображением`, 
+          variant: 'destructive' 
+        })
       }
       if (!isValidSize) {
-        toast({ title: 'File too large', description: `${file.name} is larger than 5MB`, variant: 'destructive' })
+        toast({ 
+          title: 'Файл слишком большой', 
+          description: `${file.name} больше 5MB`, 
+          variant: 'destructive' 
+        })
       }
       return isValidType && isValidSize
     })
+    
     if (validFiles.length === 0) return
-
-    // мгновенные превью
-    const newPreviews: TempPreview[] = validFiles.map((f) => ({
-      id: `${Date.now()}_${Math.random().toString(36).slice(2)}`,
-      url: URL.createObjectURL(f),
-    }))
-    setPreviews((p) => [...p, ...newPreviews])
 
     setIsUploading(true)
     try {
-      console.log('📤 Starting upload for files:', validFiles.map(f => f.name))
-      console.log('📤 Upload params:', { carId, batchId })
+      console.log('📤 Начинаем загрузку файлов:', validFiles.map(f => f.name))
       
       const formData = new FormData()
-      formData.append('carId', carId || 'new')
-      formData.append('batchId', batchId) // Передаем batchId для создания одной папки
+      formData.append('carId', carId)
+      formData.append('batchId', batchId)
       validFiles.forEach((file) => formData.append('images', file))
 
-      console.log('📤 Sending upload request...')
-      const res = await fetch('/api/images/upload', { method: 'POST', body: formData })
-      console.log('📥 Upload response status:', res.status)
+      console.log('📤 Отправляем запрос на загрузку с carId:', carId)
+      const res = await fetch('/api/images/upload', { 
+        method: 'POST', 
+        body: formData 
+      })
+      
+      console.log('📥 Ответ сервера:', res.status)
+      
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`)
+      }
       
       const result = await res.json()
-      console.log('📥 Upload response:', result)
+      console.log('📥 Результат загрузки:', result)
 
       if (!result?.success || !Array.isArray(result.images)) {
-        toast({ title: 'Upload failed', description: result?.error || 'Failed to upload images', variant: 'destructive' })
-        // уберём созданные превью
-        setPreviews((p) => p.filter((prev) => !newPreviews.some((np) => np.id === prev.id)))
+        toast({ 
+          title: 'Ошибка загрузки', 
+          description: result?.error || 'Не удалось загрузить изображения', 
+          variant: 'destructive' 
+        })
         return
       }
 
@@ -157,31 +146,33 @@ const S3ImageUpload: React.FC<S3ImageUploadProps> = ({
         .map((img: any) => String(img?.url || '').trim())
         .filter(Boolean)
 
-      console.log('📸 Uploaded URLs:', uploadedUrls)
+      console.log('📸 Загруженные URL:', uploadedUrls)
 
-      // добавляем к постоянным
+      // Добавляем к постоянным изображениям
       const nextImages = uniq([...images, ...uploadedUrls]).slice(0, maxFiles)
-      console.log('📸 Updated images array:', nextImages)
+      console.log('📸 Обновленный массив изображений:', nextImages)
       setImages(nextImages)
-      // Уведомляем родителя только если autoNotify включен
+      
+      // Уведомляем родителя
       if (autoNotify) {
-        console.log('📸 Notifying parent with images:', nextImages)
+        console.log('📸 Уведомляем родителя:', nextImages)
         notifyParent(nextImages)
-      } else {
-        console.log('🚫 Auto-notify disabled, parent will be notified manually')
       }
 
-      toast({ title: 'Upload successful', description: `Uploaded ${uploadedUrls.length} images` })
+      toast({ 
+        title: 'Загрузка успешна', 
+        description: `Загружено ${uploadedUrls.length} изображений` 
+      })
     } catch (err) {
-      console.error('Upload error:', err)
-      toast({ title: 'Upload error', description: 'Failed to upload images', variant: 'destructive' })
+      console.error('Ошибка загрузки:', err)
+      toast({ 
+        title: 'Ошибка загрузки', 
+        description: 'Не удалось загрузить изображения', 
+        variant: 'destructive' 
+      })
     } finally {
       setIsUploading(false)
-      // убираем временные превью для этой пачки
-      setPreviews((p) => p.filter((prev) => !newPreviews.some((np) => np.id === prev.id)))
       if (fileInputRef.current) fileInputRef.current.value = ''
-      // чистим blob-URL'ы
-      newPreviews.forEach((p) => URL.revokeObjectURL(p.url))
     }
   }
 
@@ -190,14 +181,19 @@ const S3ImageUpload: React.FC<S3ImageUploadProps> = ({
     void handleFiles(files)
   }
 
-  // Удаление постоянной (загруженной) картинки по индексу
+  // Удаление изображения
   const handleDeleteUploaded = async (index: number) => {
     const url = images[index]
     if (!url) return
+    
     try {
       const s3Key = url.split('/').pop()?.split('?')[0]
       if (!s3Key) {
-        toast({ title: 'Delete failed', description: 'Invalid image URL', variant: 'destructive' })
+        toast({ 
+          title: 'Ошибка удаления', 
+          description: 'Неверный URL изображения', 
+          variant: 'destructive' 
+        })
         return
       }
 
@@ -206,37 +202,40 @@ const S3ImageUpload: React.FC<S3ImageUploadProps> = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ imageKey: s3Key }),
       })
+      
       const result = await res.json()
       if (!result?.success) {
-        toast({ title: 'Delete failed', description: result?.error || 'Failed to delete image', variant: 'destructive' })
+        toast({ 
+          title: 'Ошибка удаления', 
+          description: result?.error || 'Не удалось удалить изображение', 
+          variant: 'destructive' 
+        })
         return
       }
 
       const nextImages = images.filter((_, i) => i !== index)
       setImages(nextImages)
-      // Уведомляем родителя только если autoNotify включен
+      
       if (autoNotify) {
         notifyParent(nextImages)
       }
-      toast({ title: 'Image deleted', description: 'Image removed successfully' })
+      
+      toast({ 
+        title: 'Изображение удалено', 
+        description: 'Изображение успешно удалено' 
+      })
     } catch (err) {
-      console.error('Delete error:', err)
-      toast({ title: 'Delete error', description: 'Failed to delete image', variant: 'destructive' })
+      console.error('Ошибка удаления:', err)
+      toast({ 
+        title: 'Ошибка удаления', 
+        description: 'Не удалось удалить изображение', 
+        variant: 'destructive' 
+      })
     }
   }
 
-  // Добавляем ref для доступа к методам компонента
-  const componentRef = React.useRef<{ getImages: () => string[] }>({
-    getImages: () => images
-  })
-
-  // Обновляем ref при изменении images
-  React.useEffect(() => {
-    componentRef.current.getImages = () => images
-  }, [images])
-
   return (
-    <div className={`space-y-4 ${className}`} ref={componentRef as any}>
+    <div className={`space-y-4 ${className}`}>
       {/* Зона загрузки */}
       <Card
         className={`relative border-2 border-dashed transition-colors ${
@@ -260,9 +259,11 @@ const S3ImageUpload: React.FC<S3ImageUploadProps> = ({
             <Upload className="h-8 w-8 text-gray-400" />
             <div>
               <p className="text-sm font-medium text-gray-900">
-                {isUploading ? 'Uploading...' : 'Drop images here or click to upload'}
+                {isUploading ? 'Загрузка...' : 'Перетащите изображения сюда или нажмите для выбора'}
               </p>
-              <p className="text-xs text-gray-500">PNG, JPG, WebP up to 5MB each. Max {maxFiles} files.</p>
+              <p className="text-xs text-gray-500">
+                PNG, JPG, WebP до 5MB каждое. Максимум {maxFiles} файлов.
+              </p>
             </div>
 
             {!isUploading && (
@@ -271,32 +272,29 @@ const S3ImageUpload: React.FC<S3ImageUploadProps> = ({
                 variant="outline"
                 size="sm"
                 onClick={() => fileInputRef.current?.click()}
-                disabled={images.length + previews.length >= maxFiles}
+                disabled={images.length >= maxFiles}
               >
-                Select Files
+                Выбрать файлы
               </Button>
             )}
 
             {isUploading && (
               <div className="mt-2 flex items-center justify-center space-x-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm text-gray-600">Uploading...</span>
+                <span className="text-sm text-gray-600">Загрузка...</span>
               </div>
             )}
           </div>
         </div>
       </Card>
 
-      {/* Превью и загруженные */}
-      {(() => {
-        console.log('🖼️ Rendering images section:', { images: images.length, previews: previews.length, total: images.length + previews.length })
-        return (previews.length > 0 || images.length > 0)
-      })() && (
+      {/* Загруженные изображения */}
+      {images.length > 0 && (
         <div className="space-y-3">
           <div className="flex justify-between items-center">
             <div>
               <h3 className="text-sm font-medium text-gray-900">
-                Images ({images.length + previews.length}/{maxFiles})
+                Изображения ({images.length}/{maxFiles})
               </h3>
               {!autoNotify && (
                 <p className="text-xs text-gray-500 mt-1">
@@ -304,48 +302,30 @@ const S3ImageUpload: React.FC<S3ImageUploadProps> = ({
                 </p>
               )}
             </div>
-                         {!autoNotify && onUploadComplete && (
-               <Button
-                 type="button" 
-                 variant="outline"
-                 size="sm"
-                 onClick={() => {
-                   console.log('🔄 Manual update triggered with images:', images)
-                   console.log('🔄 Images type:', typeof images)
-                   console.log('🔄 Images is array:', Array.isArray(images))
-                   console.log('🔄 onUploadComplete type:', typeof onUploadComplete)
-                   onUploadComplete(images)
-                 }}
-                 className="text-xs"
-               >
-                 Сохранить фото
-               </Button>
-             )}
+            {!autoNotify && onUploadComplete && (
+              <Button
+                type="button" 
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  console.log('🔄 Ручное обновление с изображениями:', images)
+                  onUploadComplete(images)
+                }}
+                className="text-xs"
+              >
+                Сохранить фото
+              </Button>
+            )}
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-            {/* Временные превью (идут первыми) */}
-            {previews.map((p) => (
-              <div key={p.id} className="relative group">
+            {images.map((imageUrl, index) => (
+              <div key={`${imageUrl}-${index}`} className="relative group">
                 <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
-                  <img src={p.url} alt="preview" className="w-full h-full object-cover opacity-80" />
-                </div>
-                <div className="absolute inset-0 flex items-center justify-center text-xs bg-black/30 text-white">
-                  uploading…
-                </div>
-              </div>
-            ))}
-
-            {/* Постоянные картинки */}
-            {images.map((imageUrl, index) => {
-              console.log(`🖼️ Rendering image ${index}:`, imageUrl)
-              return (
-                <div key={`${imageUrl}-${index}`} className="relative group">
-                  <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
-                    {imageUrl ? (
+                  {imageUrl ? (
                     <S3Image 
                       src={imageUrl} 
-                      alt={`Image ${index + 1}`} 
+                      alt={`Изображение ${index + 1}`} 
                       width={200}
                       height={200}
                       className="w-full h-full object-cover"
@@ -357,19 +337,20 @@ const S3ImageUpload: React.FC<S3ImageUploadProps> = ({
                   )}
                 </div>
 
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteUploaded(index)}
-                    className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                    aria-label="Удалить изображение"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteUploaded(index)}
+                  className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                  aria-label="Удалить изображение"
+                >
+                  <X className="h-3 w-3" />
+                </button>
 
-                                     <p className="mt-1 text-xs text-gray-500 truncate">{imageUrl.split('/').pop()}</p>
-                 </div>
-               )
-             })}
+                <p className="mt-1 text-xs text-gray-500 truncate">
+                  {imageUrl.split('/').pop()}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       )}

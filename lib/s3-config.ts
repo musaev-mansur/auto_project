@@ -1,5 +1,4 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3'
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
 
 // S3 конфигурация
 console.log('🔧 S3 Config - Region:', process.env.AWS_REGION || 'eu-north-1')
@@ -108,31 +107,7 @@ export const deleteImageFromS3 = async (key: string): Promise<ImageDeleteRespons
   }
 }
 
-// Получение подписанного URL для приватных файлов (если нужно)
-export const getSignedImageUrl = async (key: string, expiresIn: number = 3600): Promise<string> => {
-  const command = new GetObjectCommand({
-    Bucket: BUCKET_NAME,
-    Key: key,
-  })
 
-  return await getSignedUrl(s3Client, command, { expiresIn })
-}
-
-// Валидация файла изображения
-export const validateImageFile = (file: Express.Multer.File): { valid: boolean; error?: string } => {
-  const maxSize = 5 * 1024 * 1024 // 5MB
-  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
-
-  if (file.size > maxSize) {
-    return { valid: false, error: 'File size too large. Maximum size is 5MB.' }
-  }
-
-  if (!allowedTypes.includes(file.mimetype)) {
-    return { valid: false, error: 'Invalid file type. Only JPEG, PNG, and WebP are allowed.' }
-  }
-
-  return { valid: true }
-}
 
 // Извлечение ключа S3 из URL
 export const extractS3KeyFromUrl = (url: string): string | null => {

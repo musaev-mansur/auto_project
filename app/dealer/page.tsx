@@ -525,7 +525,7 @@ export default function DealerDashboard() {
                                 <Eye className="h-3 w-3 lg:h-4 lg:w-4" />
                               </Button>
                             </Link>
-                            <Link href={`/dealer/car-part/${car.id}`}>
+                            <Link href={`/dealer/edit-car/${car.id}`}>
                               <Button size="sm" variant="outline" className="flex-1">
                                 <Edit className="h-3 w-3 lg:h-4 lg:w-4" />
                               </Button>

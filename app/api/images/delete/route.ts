@@ -1,7 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { deleteImageFromS3, extractS3KeyFromUrl } from '@/lib/s3-config'
 
-// Обработка DELETE запроса для удаления изображений
+// Вспомогательная функция для извлечения ключей
+function extractKeys(imageUrl?: string, imageKey?: string, imageUrls?: string[], imageKeys?: string[]): string[] {
+  const keys: string[] = []
+  
+  // Обработка одиночных значений
+  if (imageKey) keys.push(imageKey)
+  if (imageUrl) {
+    const extractedKey = extractS3KeyFromUrl(imageUrl)
+    if (extractedKey) keys.push(extractedKey)
+  }
+  
+  // Обработка массивов
+  if (imageKeys && Array.isArray(imageKeys)) {
+    keys.push(...imageKeys)
+  }
+  if (imageUrls && Array.isArray(imageUrls)) {
+    for (const url of imageUrls) {
+      const extractedKey = extractS3KeyFromUrl(url)
+      if (extractedKey) keys.push(extractedKey)
+    }
+  }
+  
+  return keys
+}
+
+// DELETE - удаление одного изображения
 export async function DELETE(request: NextRequest) {
   try {
     const { imageUrl, imageKey } = await request.json()
@@ -13,27 +38,16 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    let key: string
-
-    if (imageKey) {
-      key = imageKey
-    } else if (imageUrl) {
-      const extractedKey = extractS3KeyFromUrl(imageUrl)
-      if (!extractedKey) {
-        return NextResponse.json(
-          { error: 'Invalid S3 URL provided' },
-          { status: 400 }
-        )
-      }
-      key = extractedKey
-    } else {
+    const keys = extractKeys(imageUrl, imageKey)
+    
+    if (keys.length === 0) {
       return NextResponse.json(
         { error: 'No valid image identifier provided' },
         { status: 400 }
       )
     }
 
-    // Удаление изображения из S3
+    const key = keys[0] // Берем первый ключ для одиночного удаления
     const result = await deleteImageFromS3(key)
 
     if (!result.success) {
@@ -58,7 +72,7 @@ export async function DELETE(request: NextRequest) {
   }
 }
 
-// Обработка POST запроса для массового удаления
+// POST - массовое удаление изображений
 export async function POST(request: NextRequest) {
   try {
     const { imageUrls, imageKeys } = await request.json()
@@ -70,22 +84,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const keys: string[] = []
-
-    // Обработка imageKeys
-    if (imageKeys && Array.isArray(imageKeys)) {
-      keys.push(...imageKeys)
-    }
-
-    // Обработка imageUrls
-    if (imageUrls && Array.isArray(imageUrls)) {
-      for (const url of imageUrls) {
-        const extractedKey = extractS3KeyFromUrl(url)
-        if (extractedKey) {
-          keys.push(extractedKey)
-        }
-      }
-    }
+    const keys = extractKeys(undefined, undefined, imageUrls, imageKeys)
 
     if (keys.length === 0) {
       return NextResponse.json(
