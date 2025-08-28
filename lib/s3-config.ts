@@ -2,7 +2,7 @@ import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client
 
 // S3 конфигурация
 console.log('🔧 S3 Config - Region:', process.env.AWS_REGION || 'eu-north-1')
-console.log('🔧 S3 Config - Bucket:', process.env.AWS_S3_BUCKET_NAME || 'autodealer-images')
+console.log('🔧 S3 Config - Bucket:', process.env.AWS_S3_BUCKET_NAME || 'aslan-auto-img')
 console.log('🔧 S3 Config - Access Key ID:', process.env.AWS_ACCESS_KEY_ID ? '✅ Set' : '❌ Missing')
 console.log('🔧 S3 Config - Secret Access Key:', process.env.AWS_SECRET_ACCESS_KEY ? '✅ Set' : '❌ Missing')
 
@@ -14,7 +14,7 @@ const s3Client = new S3Client({
   },
 })
 
-const BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME || 'autodealer-images'
+const BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME || 'aslan-auto-img'
 const BUCKET_REGION = process.env.AWS_REGION || 'eu-north-1'
 
 // Типы для изображений

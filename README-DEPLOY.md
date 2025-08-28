@@ -70,7 +70,7 @@ POSTGRES_PASSWORD=your_secure_password
 AWS_ACCESS_KEY_ID=your_aws_access_key_id
 AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key
 AWS_REGION=eu-north-1
-AWS_S3_BUCKET=autodealer-images
+AWS_S3_BUCKET=aslan-auto-img
 
 # Next.js
 NODE_ENV=production

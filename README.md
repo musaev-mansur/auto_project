@@ -129,7 +129,7 @@ RENDER="false"
 AWS_ACCESS_KEY_ID="your-aws-access-key-id"
 AWS_SECRET_ACCESS_KEY="your-aws-secret-access-key"
 AWS_REGION="eu-west-1"
-AWS_S3_BUCKET_NAME="autodealer-images"
+AWS_S3_BUCKET_NAME="aslan-auto-img"
 ```
 
 4. **Set up the database:**
@@ -155,7 +155,7 @@ Navigate to [http://localhost:3000](http://localhost:3000)
 
 ### 1. Create S3 Bucket
 1. Go to [AWS S3 Console](https://console.aws.amazon.com/s3/)
-2. Create a new bucket named `autodealer-images`
+2. Create a new bucket named `aslan-auto-img`
 3. Set region to `eu-west-1` (or your preferred region)
 4. Configure bucket for public read access
 
@@ -184,7 +184,7 @@ Add your AWS credentials to `.env`:
 AWS_ACCESS_KEY_ID="your-access-key"
 AWS_SECRET_ACCESS_KEY="your-secret-key"
 AWS_REGION="eu-west-1"
-AWS_S3_BUCKET_NAME="autodealer-images"
+AWS_S3_BUCKET_NAME="aslan-auto-img"
 ```
 
 ### 5. Migrate Existing Images (Optional)
