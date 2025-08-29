@@ -1,8 +1,8 @@
 # Dockerfile для продакшена
-FROM node:18-alpine
+FROM node:18-slim
 
 # Устанавливаем зависимости для сборки
-RUN apk add --no-cache libc6-compat
+RUN apt-get update && apt-get install -y libc6 && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
