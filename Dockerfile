@@ -4,10 +4,8 @@ FROM node:18
 # Устанавливаем зависимости для сборки
 RUN apt-get update && apt-get install -y libc6 && rm -rf /var/lib/apt/lists/*
 
-# Настраиваем DNS и npm registry
-RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
-    echo "nameserver 8.8.4.4" >> /etc/resolv.conf && \
-    npm config set registry https://registry.npmjs.org/ && \
+# Настраиваем npm registry
+RUN npm config set registry https://registry.npmjs.org/ && \
     npm config set fetch-retries 5 && \
     npm config set fetch-retry-mintimeout 20000 && \
     npm config set fetch-retry-maxtimeout 120000
