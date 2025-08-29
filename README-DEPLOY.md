@@ -136,7 +136,7 @@ sudo nano /etc/nginx/sites-available/auto_project
 ```nginx
 server {
     listen 80;
-    server_name your-domain.com;
+    server_name carspark.be;
 
     location / {
         proxy_pass http://localhost:3000;
