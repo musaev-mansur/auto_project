@@ -1,5 +1,5 @@
 # Dockerfile для локальной разработки
-FROM node:18-alpine
+FROM node:18
 
 # Устанавливаем зависимости
 RUN apk add --no-cache libc6-compat
@@ -15,7 +15,7 @@ COPY prisma ./prisma
 # Устанавливаем зависимости
 RUN \
   if [ -f package-lock.json ]; then npm ci; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i; \
+  elif [ -f pnpm-lock.yaml ]; then corepack enable npm && npm i; \
   else npm install; \
   fi
 
