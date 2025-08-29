@@ -1,245 +1,210 @@
 # Инструкция по деплою на VPS сервер
 
-## Подготовка
+## Подготовка сервера Ubuntu
 
-### 1. Требования к VPS серверу
-- Ubuntu 20.04+ или Debian 11+
-- Минимум 2GB RAM
-- Минимум 20GB дискового пространства
-- Доступ по SSH
+### 1. Установка Docker и Docker Compose
 
-### 2. Подготовка проекта
-
-Убедитесь, что в проекте есть все необходимые файлы:
-- `Dockerfile` - для контейнеризации приложения
-- `docker-compose.yml` - для оркестрации контейнеров
-- `nginx.conf` - конфигурация веб-сервера
-- `deploy.sh` - скрипт автоматического деплоя
-- `setup-vps.sh` - скрипт настройки VPS
-
-## Деплой на VPS
-
-### Шаг 1: Подключение к серверу
 ```bash
-ssh user@your-server-ip
-```
+# Обновляем систему
+sudo apt update && sudo apt upgrade -y
 
-### Шаг 2: Настройка VPS сервера
-```bash
-# Скачиваем скрипт настройки
-wget https://raw.githubusercontent.com/your-repo/auto_project/main/setup-vps.sh
-chmod +x setup-vps.sh
-./setup-vps.sh
-```
+# Устанавливаем необходимые пакеты
+sudo apt install -y apt-transport-https ca-certificates curl gnupg lsb-release
 
-### Шаг 3: Перезагрузка сервера
-```bash
+# Добавляем GPG ключ Docker
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+
+# Добавляем репозиторий Docker
+echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# Обновляем список пакетов
+sudo apt update
+
+# Устанавливаем Docker
+sudo apt install -y docker-ce docker-ce-cli containerd.io
+
+# Устанавливаем Docker Compose
+sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+
+# Добавляем пользователя в группу docker (чтобы не использовать sudo)
+sudo usermod -aG docker $USER
+
+# Перезагружаем систему или перелогиниваемся
 sudo reboot
 ```
 
-### Шаг 4: Подключение к серверу заново
-```bash
-ssh user@your-server-ip
-```
+### 2. Клонирование проекта
 
-### Шаг 5: Клонирование проекта
 ```bash
-cd /opt
-git clone https://github.com/your-repo/auto_project.git
+# Создаем папку для проектов (рекомендуется)
+sudo mkdir -p /opt/projects
+sudo chown $USER:$USER /opt/projects
+
+# Переходим в папку
+cd /opt/projects
+
+# Клонируем проект
+git clone https://github.com/musaev-mansur/auto_project.git
 cd auto_project
 ```
 
-### Шаг 6: Настройка переменных окружения
+**Альтернативный вариант - клонирование в домашнюю папку:**
 ```bash
-# Копируем пример файла
-cp env.production.example .env.production
-
-# Редактируем файл
-nano .env.production
+# Клонируем в домашнюю папку
+cd ~
+git clone https://github.com/musaev-mansur/auto_project.git
+cd auto_project
 ```
 
-Заполните следующие переменные:
+## Настройка переменных окружения
+
+Создайте файл `.env` в корне проекта:
+
+```bash
+# Создаем файл .env
+nano .env
+```
+
+Содержимое файла `.env`:
+
 ```env
 # База данных
-DATABASE_URL="postgresql://postgres:your_secure_password@postgres:5432/auto_project"
+DATABASE_URL=postgresql://postgres:your_secure_password@postgres:5432/auto_project
 POSTGRES_DB=auto_project
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=your_secure_password
 
 # AWS S3
-AWS_ACCESS_KEY_ID=your_aws_access_key_id
-AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key
+AWS_ACCESS_KEY_ID=your_aws_access_key
+AWS_SECRET_ACCESS_KEY=your_aws_secret_key
 AWS_REGION=eu-north-1
 AWS_S3_BUCKET=aslan-auto-img
 
-# Next.js
-NODE_ENV=production
+# NextAuth
 NEXTAUTH_URL=https://your-domain.com
 NEXTAUTH_SECRET=your_nextauth_secret
-
-# Дополнительные настройки
 NEXT_PUBLIC_APP_URL=https://your-domain.com
 ```
 
-### Шаг 7: Настройка SSL сертификатов
+## Запуск приложения
 
-#### Вариант A: Let's Encrypt (рекомендуется)
+### Для продакшена:
 ```bash
-# Устанавливаем Certbot
-sudo apt install certbot python3-certbot-nginx
-
-# Получаем сертификат
-sudo certbot --nginx -d your-domain.com
-
-# Копируем сертификаты
-sudo cp /etc/letsencrypt/live/your-domain.com/fullchain.pem /opt/auto-project/ssl/cert.pem
-sudo cp /etc/letsencrypt/live/your-domain.com/privkey.pem /opt/auto-project/ssl/key.pem
-sudo chown $USER:$USER /opt/auto-project/ssl/*
+# Собираем и запускаем контейнеры
+docker-compose -f docker-compose.prod.yml up -d --build
 ```
 
-#### Вариант B: Самоподписанные сертификаты (для тестирования)
+### Для остановки:
 ```bash
-cd /opt/auto-project/ssl
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-    -keyout key.pem -out cert.pem \
-    -subj "/C=RU/ST=State/L=City/O=Organization/CN=your-domain.com"
+docker-compose -f docker-compose.prod.yml down
 ```
 
-### Шаг 8: Запуск деплоя
+### Для просмотра логов:
 ```bash
-cd /opt/auto-project
-chmod +x deploy.sh
-./deploy.sh production
+docker-compose -f docker-compose.prod.yml logs -f app
 ```
 
-### Шаг 9: Проверка работы
+## Миграции базы данных
+
+После первого запуска выполните миграции:
+
 ```bash
-# Проверяем статус контейнеров
-docker-compose ps
+# Войти в контейнер
+docker-compose -f docker-compose.prod.yml exec app sh
 
-# Просматриваем логи
-docker-compose logs -f app
+# Выполнить миграции
+npx prisma migrate deploy
 
-# Проверяем доступность приложения
-curl http://localhost:3000/api/health
+# Выйти из контейнера
+exit
 ```
 
-## Управление приложением
+## Настройка Nginx (опционально)
 
-### Просмотр логов
+Если используете Nginx как reverse proxy:
+
 ```bash
-# Все контейнеры
-docker-compose logs -f
+# Устанавливаем Nginx
+sudo apt install -y nginx
 
-# Только приложение
-docker-compose logs -f app
-
-# Только база данных
-docker-compose logs -f postgres
+# Создаем конфигурацию
+sudo nano /etc/nginx/sites-available/auto_project
 ```
 
-### Остановка приложения
-```bash
-docker-compose down
+Содержимое конфигурации:
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
 ```
 
-### Перезапуск приложения
 ```bash
-docker-compose restart
+# Активируем сайт
+sudo ln -s /etc/nginx/sites-available/auto_project /etc/nginx/sites-enabled/
+
+# Проверяем конфигурацию
+sudo nginx -t
+
+# Перезапускаем Nginx
+sudo systemctl restart nginx
 ```
 
-### Обновление приложения
-```bash
-# Останавливаем контейнеры
-docker-compose down
+## Обновление приложения
 
-# Обновляем код
+Для обновления приложения:
+
+```bash
+# Остановить контейнеры
+docker-compose -f docker-compose.prod.yml down
+
+# Получить обновления
 git pull
 
-# Пересобираем и запускаем
-./deploy.sh production --clean
+# Пересобрать и запустить
+docker-compose -f docker-compose.prod.yml up -d --build
 ```
 
-### Резервное копирование базы данных
+## Мониторинг
+
+Проверить статус контейнеров:
 ```bash
-# Создание бэкапа
-docker-compose exec postgres pg_dump -U postgres auto_project > backup_$(date +%Y%m%d_%H%M%S).sql
-
-# Восстановление из бэкапа
-docker-compose exec -T postgres psql -U postgres auto_project < backup_file.sql
+docker-compose -f docker-compose.prod.yml ps
 ```
 
-## Мониторинг и обслуживание
-
-### Автоматическое обновление системы
-Система настроена на автоматическое обновление каждое воскресенье в 2:00.
-
-### Мониторинг ресурсов
+Проверить использование ресурсов:
 ```bash
-# Просмотр использования ресурсов
-htop
-
-# Просмотр дискового пространства
-df -h
-
-# Просмотр использования памяти
-free -h
+docker stats
 ```
 
-### Очистка Docker
+## Полезные команды
+
 ```bash
-# Удаление неиспользуемых образов
-docker image prune -f
+# Очистка неиспользуемых Docker ресурсов
+docker system prune -a
 
-# Удаление неиспользуемых контейнеров
-docker container prune -f
+# Просмотр всех контейнеров
+docker ps -a
 
-# Полная очистка
-docker system prune -af
+# Просмотр всех образов
+docker images
+
+# Остановка всех контейнеров
+docker stop $(docker ps -q)
+
+# Удаление всех контейнеров
+docker rm $(docker ps -aq)
 ```
-
-## Устранение неполадок
-
-### Приложение не запускается
-1. Проверьте логи: `docker-compose logs app`
-2. Проверьте переменные окружения: `cat .env.production`
-3. Проверьте доступность базы данных: `docker-compose exec postgres psql -U postgres -d auto_project`
-
-### Проблемы с SSL
-1. Проверьте наличие сертификатов: `ls -la ssl/`
-2. Проверьте права доступа: `chmod 600 ssl/*`
-3. Проверьте конфигурацию nginx: `docker-compose logs nginx`
-
-### Проблемы с базой данных
-1. Проверьте статус контейнера: `docker-compose ps postgres`
-2. Проверьте логи: `docker-compose logs postgres`
-3. Проверьте подключение: `docker-compose exec postgres psql -U postgres -d auto_project`
-
-## Безопасность
-
-### Firewall
-Firewall настроен и разрешает только необходимые порты:
-- 22 (SSH)
-- 80 (HTTP)
-- 443 (HTTPS)
-- 3000 (приложение)
-
-### Fail2ban
-Настроен для защиты от брутфорс атак на SSH.
-
-### SSL/TLS
-Рекомендуется использовать Let's Encrypt сертификаты для продакшена.
-
-## Масштабирование
-
-### Увеличение ресурсов
-1. Остановите приложение: `docker-compose down`
-2. Измените лимиты в `docker-compose.yml`
-3. Перезапустите: `./deploy.sh production`
-
-### Балансировка нагрузки
-Для высоких нагрузок рекомендуется использовать внешний балансировщик нагрузки (например, AWS ALB или Nginx Plus).
-
-## Контакты
-
-При возникновении проблем обращайтесь к документации или создавайте issue в репозитории проекта.

@@ -1,4 +1,6 @@
+# Исключаем ненужные файлы
 node_modules
+.next
 npm-debug.log
 .git
 .gitignore
@@ -8,7 +10,6 @@ README.md
 .env.development.local
 .env.test.local
 .env.production.local
-.next
 .vercel
 .DS_Store
 *.tsbuildinfo
@@ -31,6 +32,8 @@ logs
 .node_repl_history
 *.tgz
 .yarn-integrity
+
+# Исключаем примеры env файлов
 .env.example
 .env.local.example
 .env.production.example
@@ -41,3 +44,30 @@ logs
 .env.development.local.example
 .env.test.local.example
 .env.staging.local.example
+
+# Исключаем временные файлы
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Исключаем скрипты разработки
+scripts/
+*.sh
+
+# Исключаем документацию
+*.md
+!README.md
+
+# Исключаем конфигурационные файлы разработки
+docker-compose.local.yml
+Dockerfile.dev
+
+# Исключаем тестовые файлы
+__tests__/
+*.test.*
+*.spec.*
+
+# Исключаем кэш
+.cache/
+.parcel-cache/
