@@ -9,11 +9,11 @@ COPY . .
 # Устанавливаем зависимости
 RUN npm install
 
-# Собираем приложение
-RUN npm run build
-
 # Генерируем Prisma клиент
 RUN npx prisma generate
+
+# Собираем приложение
+RUN npm run build
 
 # Открываем порт
 EXPOSE 3000
