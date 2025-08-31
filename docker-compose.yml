@@ -9,7 +9,7 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=development
-      - DATABASE_URL=postgresql://postgres:password@postgres:5432/auto_project
+      - DATABASE_URL=${DATABASE_URL}
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - AWS_REGION=${AWS_REGION:-eu-north-1}
@@ -33,7 +33,7 @@ services:
     environment:
       - POSTGRES_DB=auto_project
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
