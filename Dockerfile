@@ -7,13 +7,13 @@ WORKDIR /app
 COPY . .
 
 # Устанавливаем зависимости
-RUN npm install
+# RUN npm install
 
 # # Генерируем Prisma клиент
 # RUN npx prisma generate
 
-# Собираем приложение
-RUN npm run build
+# # Собираем приложение
+# RUN npm run build
 
 # Открываем порт
 EXPOSE 3000
