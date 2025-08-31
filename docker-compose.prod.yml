@@ -22,9 +22,16 @@ services:
       - postgres
     networks:
       - app-network
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+      - 1.1.1.1
+      - 1.0.0.1
 
   postgres:
     image: postgres:15-alpine
+    ports:
+      - "5432:5432"
     environment:
       - POSTGRES_DB=${POSTGRES_DB:-auto_project}
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
