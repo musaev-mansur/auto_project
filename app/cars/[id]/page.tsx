@@ -9,7 +9,6 @@ import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, Calendar, Gauge, Fuel, Settings, MapPin, Eye, Phone, MessageCircle, Mail, Edit } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { ImageGallery } from '@/components/image-gallery'
@@ -258,35 +257,6 @@ export default function CarDetailPage() {
               <Link href="https://wa.me/+32487250651">{t('car.whatsapp')}</Link>
             </Button>
 
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="w-full text-sm sm:text-base" size="sm">
-                  <Mail className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> 
-                  {t('car.askQuestion')}
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>{t('car.askQuestion')}</DialogTitle>
-                </DialogHeader>
-                <ContactForm type="question" />
-              </DialogContent>
-            </Dialog>
-
-                          <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="outline" className="w-full text-sm sm:text-base" size="sm">
-                    <Calendar className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> 
-                    {t('car.scheduleViewing')}
-                  </Button>
-                </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>{t('car.scheduleViewing')}</DialogTitle>
-                </DialogHeader>
-                <ContactForm type="viewing" />
-              </DialogContent>
-            </Dialog>
           </div>
             </div>
           </div>

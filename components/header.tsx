@@ -28,7 +28,7 @@ export function Header() {
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center space-x-2">
             <Car className="h-8 w-8 text-blue-600" />
-            <span className="text-xl font-bold">AutoDealer</span>
+            <span className="text-xl font-bold">CarsPark</span>
           </Link>
           
           <nav className="hidden md:flex items-center space-x-6">
@@ -41,9 +41,9 @@ export function Header() {
             <Link href="/parts" className="text-gray-700 hover:text-blue-600">
               {t('nav.parts')}
             </Link>
-            <Link href="/#" className="text-gray-700 hover:text-blue-600">
+            {/* <Link href="/#" className="text-gray-700 hover:text-blue-600">
               {locale === 'ru' ? 'Контакты' : 'Contacts'}
-            </Link>
+            </Link> */}
           </nav>
 
           <div className="hidden md:flex items-center space-x-2">

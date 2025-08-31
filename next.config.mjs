@@ -28,10 +28,10 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'aslan-auto-img.s3.eu-north-1.amazonaws.com',
       },
-      // S3: https://autodealer-images.s3.eu-north-1.amazonaws.com/...
+      // S3: https://CarsPark-images.s3.eu-north-1.amazonaws.com/...
       {
         protocol: 'https',
-        hostname: 'autodealer-images.s3.eu-north-1.amazonaws.com',
+        hostname: 'CarsPark-images.s3.eu-north-1.amazonaws.com',
       },
       // S3 вариант через общий endpoint: https://s3.eu-north-1.amazonaws.com/aslan-auto-img/...
       {
@@ -39,11 +39,11 @@ const nextConfig = {
         hostname: 's3.eu-north-1.amazonaws.com',
         pathname: '/aslan-auto-img/**',
       },
-      // S3 вариант через общий endpoint: https://s3.eu-north-1.amazonaws.com/autodealer-images/...
+      // S3 вариант через общий endpoint: https://s3.eu-north-1.amazonaws.com/CarsPark-images/...
       {
         protocol: 'https',
         hostname: 's3.eu-north-1.amazonaws.com',
-        pathname: '/autodealer-images/**',
+        pathname: '/CarsPark-images/**',
       },
       // твой прод-домен Render (на случай абсолютных URL на себя)
       {

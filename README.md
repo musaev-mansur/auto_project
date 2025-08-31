@@ -1,4 +1,4 @@
-# AutoDealer - Car Management System
+# CarsPark - Car Management System
 
 A modern car dealership platform with multilingual support (RU/EN) and comprehensive car management features.
 
@@ -6,7 +6,7 @@ A modern car dealership platform with multilingual support (RU/EN) and comprehen
 
 **[View Live Project](https://autoproject-xi78.onrender.com/)**
 
-![AutoDealer Preview](./auto.gif)
+![CarsPark Preview](./auto.gif)
 
 ## 🚀 Features
 
