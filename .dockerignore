@@ -1,6 +1,6 @@
 # Исключаем ненужные файлы
 node_modules
-.next
+# .next
 npm-debug.log
 .git
 .gitignore
