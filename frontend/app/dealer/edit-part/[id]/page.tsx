@@ -15,6 +15,7 @@ import { ArrowLeft, ArrowRight, Save, Eye, Loader2, RefreshCw, Image as ImageIco
 import S3ImageUpload from '@/components/s3-image-upload'
 import S3Image from '@/components/s3-image'
 import { useLocale } from '@/contexts/locale-context'
+import { useAuth } from '@/contexts/auth-context'
 import { getCategoryText, getConditionText, getUIText } from '@/lib/translations'
 
 interface Part {
@@ -47,6 +48,10 @@ export default function EditPartPage() {
   const params = useParams()
   const partId = params.id as string
   const { locale } = useLocale()
+  const { isAuthenticated, admin } = useAuth()
+  
+  // Отладочная информация
+  console.log('🔐 Auth status:', { isAuthenticated, admin })
   
   const [currentStep, setCurrentStep] = React.useState(1)
   const [loading, setLoading] = React.useState(false)
@@ -100,7 +105,9 @@ export default function EditPartPage() {
       setFetchLoading(true)
       try {
         console.log('🔍 Загружаем запчасть с ID:', partId)
-        const response = await fetch(`http://localhost:8000/api/parts/${partId}/`)
+        const response = await fetch(`http://localhost:8000/api/parts/${partId}/`, {
+          credentials: 'include' // Важно для Django сессий
+        })
         console.log('📥 Response status:', response.status)
         if (!response.ok) {
           throw new Error(response.status === 404 ? 'Запчасть не найдена' : `Ошибка: ${response.status}`)
@@ -161,6 +168,13 @@ export default function EditPartPage() {
     setLoading(true)
     setError('')
 
+    // Проверяем аутентификацию
+    if (!isAuthenticated) {
+      setError('Необходимо войти в систему')
+      setLoading(false)
+      return
+    }
+
     try {
       const finalPartData = {
         ...partData,
@@ -175,6 +189,7 @@ export default function EditPartPage() {
       const response = await fetch(`http://localhost:8000/api/parts/${partId}/`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // Важно для Django сессий
         body: JSON.stringify(finalPartData),
       })
 

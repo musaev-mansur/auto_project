@@ -101,6 +101,21 @@ export default function AddCarPage() {
         ...carData,
         status,
         vin: carData.vin || `AUTO${Date.now()}`,
+        // Добавляем значения по умолчанию для обязательных полей
+        body_type: carData.bodyType || 'sedan',
+        engine_volume: carData.engineVolume || 1.6,
+        euro_standard: carData.euroStandard || 'Euro 5',
+        color: carData.color || 'Белый',
+        power: carData.power || 100,
+        condition: carData.condition || 'good',
+        transmission: carData.transmission || 'manual',
+        fuel: carData.fuel || 'petrol',
+        drive: carData.drive || 'front',
+        price: carData.price || 0,
+        currency: carData.currency || 'EUR',
+        city: carData.city || 'Москва',
+        description: carData.description || 'Описание автомобиля',
+        photos: carData.photos || [],
       }
 
       const response = await fetch('http://localhost:8000/api/cars/', {
@@ -112,10 +127,25 @@ export default function AddCarPage() {
       const data = await response.json()
 
       if (response.ok) {
-        setSavedCarId(data.car.id)
+        // Проверяем структуру ответа
+        if (data.id) {
+          setSavedCarId(data.id)
+        } else if (data.car && data.car.id) {
+          setSavedCarId(data.car.id)
+        }
         router.push('/dealer')
       } else {
-        setError(data.error || 'Ошибка при сохранении автомобиля')
+        // Обрабатываем ошибки валидации
+        if (data.detail) {
+          setError(data.detail)
+        } else if (typeof data === 'object') {
+          const errorMessages = Object.entries(data)
+            .map(([field, errors]) => `${field}: ${Array.isArray(errors) ? errors.join(', ') : errors}`)
+            .join('; ')
+          setError(errorMessages)
+        } else {
+          setError(data.error || 'Ошибка при сохранении автомобиля')
+        }
       }
     } catch (err) {
       console.error('Ошибка при сохранении:', err)

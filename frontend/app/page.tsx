@@ -121,6 +121,16 @@ export default function HomePage() {
   // Показываем только опубликованные автомобили и запчасти
   const publishedCars = cars.filter((car: any) => car.status === 'published')
   const publishedParts = parts.filter((part: any) => part.status === 'published')
+  
+  // Отладочная информация
+  console.log('🚗 Автомобили:', publishedCars)
+  console.log('🔧 Запчасти:', publishedParts)
+  if (publishedCars.length > 0) {
+    console.log('📸 Первый автомобиль photos:', publishedCars[0].photos)
+  }
+  if (publishedParts.length > 0) {
+    console.log('📸 Первая запчасть photos:', publishedParts[0].photos)
+  }
 
   // Показываем загрузку пока не загрузимся на клиенте
   if (!isClient) {
@@ -137,26 +147,26 @@ export default function HomePage() {
       
       <main className="container mx-auto px-4 py-8">
         {/* Hero Section */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+        <div className="text-center mb-8 sm:mb-12 px-4">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 sm:mb-4">
             {t('hero.title')}
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg lg:text-xl text-gray-600 mb-6 sm:mb-8 max-w-2xl mx-auto">
             {t('hero.subtitle')}
           </p>
-          <div className="flex justify-center gap-4">
-            <Link href="#cars">
-              <Button size="lg" className="flex items-center gap-2">
-                <Car className="h-5 w-5" />
-                {t('hero.viewCars')}
-                <ArrowRight className="h-4 w-4" />
+          <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 px-4">
+            <Link href="#cars" className="w-full sm:w-auto">
+              <Button size="lg" className="flex items-center gap-2 w-full sm:w-auto">
+                <Car className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="text-sm sm:text-base">{t('hero.viewCars')}</span>
+                <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
             </Link>
-            <Link href="#parts">
-              <Button size="lg" variant="outline" className="flex items-center gap-2">
-                <Package className="h-5 w-5" />
-                {t('hero.viewParts')}
-                <ArrowRight className="h-4 w-4" />
+            <Link href="#parts" className="w-full sm:w-auto">
+              <Button size="lg" variant="outline" className="flex items-center gap-2 w-full sm:w-auto">
+                <Package className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="text-sm sm:text-base">{t('hero.viewParts')}</span>
+                <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
             </Link>
           </div>

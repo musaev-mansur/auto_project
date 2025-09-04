@@ -92,21 +92,48 @@ export default function AddPartPage() {
         status,
         yearFrom: partData.yearFrom ? parseInt(partData.yearFrom) : null,
         yearTo: partData.yearTo ? parseInt(partData.yearTo) : null,
-        price: parseFloat(partData.price),
+        price: parseFloat(partData.price) || 0,
+        // Добавляем значения по умолчанию для обязательных полей
+        name: partData.name || 'Запчасть',
+        brand: partData.brand || 'Неизвестно',
+        model: partData.model || 'Неизвестно',
+        category: partData.category || 'Другое',
+        condition: partData.condition || 'new',
+        currency: partData.currency || 'EUR',
+        city: partData.city || 'Москва',
+        description: partData.description || 'Описание запчасти',
+        photos: partData.photos || [],
+        // Не отправляем admin_id - он будет установлен автоматически в perform_create
       }
 
       const response = await fetch('http://localhost:8000/api/parts/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // Важно для Django сессий
         body: JSON.stringify(finalPartData),
       })
       const data = await response.json()
 
       if (response.ok) {
-        setSavedPartId(data.id || data.part?.id)
+        // Проверяем структуру ответа
+        if (data.id) {
+          setSavedPartId(data.id)
+        } else if (data.part && data.part.id) {
+          setSavedPartId(data.part.id)
+        }
         router.push('/dealer')
       } else {
-        setError(data.error || 'Ошибка при сохранении запчасти')
+        // Обрабатываем ошибки валидации
+        if (data.detail) {
+          setError(data.detail)
+        } else if (typeof data === 'object') {
+          const errorMessages = Object.entries(data)
+            .map(([field, errors]) => `${field}: ${Array.isArray(errors) ? errors.join(', ') : errors}`)
+            .join('; ')
+          setError(errorMessages)
+        } else {
+          setError(data.error || 'Ошибка при сохранении запчасти')
+        }
       }
     } catch (err) {
       console.error('Ошибка при сохранении:', err)

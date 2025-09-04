@@ -33,7 +33,9 @@ class CarSerializer(serializers.ModelSerializer):
     admin_id = serializers.PrimaryKeyRelatedField(
         queryset=Admin.objects.all(),
         source='admin',
-        write_only=True
+        write_only=True,
+        required=False,
+        allow_null=True
     )
     
     class Meta:
@@ -49,9 +51,11 @@ class CarListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Car
         fields = [
-            'id', 'brand', 'model', 'year', 'mileage', 'transmission', 
-            'fuel', 'price', 'currency', 'city', 'status', 'views',
-            'admin_name', 'created_at'
+            'id', 'brand', 'model', 'generation', 'year', 'mileage', 'transmission', 
+            'fuel', 'drive', 'body_type', 'color', 'power', 'engine_volume', 
+            'euro_standard', 'vin', 'condition', 'customs', 'vat', 'owners',
+            'price', 'currency', 'negotiable', 'city', 'description', 'status', 'views',
+            'admin_name', 'created_at', 'photos'
         ]
 
 
@@ -61,7 +65,9 @@ class PartSerializer(serializers.ModelSerializer):
     admin_id = serializers.PrimaryKeyRelatedField(
         queryset=Admin.objects.all(),
         source='admin',
-        write_only=True
+        write_only=True,
+        required=False,
+        allow_null=True
     )
     
     class Meta:
@@ -77,7 +83,7 @@ class PartListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Part
         fields = [
-            'id', 'name', 'brand', 'model', 'category', 'condition',
-            'price', 'currency', 'city', 'status', 'views',
-            'admin_name', 'created_at'
+            'id', 'name', 'brand', 'model', 'year_from', 'year_to', 'category', 'condition',
+            'price', 'currency', 'negotiable', 'city', 'description', 'status', 'views',
+            'admin_name', 'created_at', 'photos'
         ]

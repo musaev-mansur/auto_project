@@ -21,14 +21,25 @@ const S3Image: React.FC<S3ImageProps> = ({
   className = '',
   fallback = '/placeholder.jpg'
 }) => {
+  console.log('🖼️ S3Image render:', { src, alt, isValidSrc: src && src.trim() !== '' && src !== 'undefined' && src !== 'null' })
   // Проверяем валидность src
   const isValidSrc = src && src.trim() !== '' && src !== 'undefined' && src !== 'null'
-  const [imageSrc, setImageSrc] = React.useState<string>(isValidSrc ? src : fallback)
+  
+  // Если src не содержит полный URL, добавляем базовый URL S3
+  const getFullSrc = (src: string) => {
+    if (src.startsWith('http')) {
+      return src
+    }
+    // Предполагаем, что это имя файла из S3
+    return `https://aslan-auto-img.s3.amazonaws.com/${src}`
+  }
+  
+  const [imageSrc, setImageSrc] = React.useState<string>(isValidSrc ? getFullSrc(src) : fallback)
   const [hasError, setHasError] = React.useState(!isValidSrc)
 
   React.useEffect(() => {
     if (isValidSrc) {
-      setImageSrc(src)
+      setImageSrc(getFullSrc(src))
       setHasError(false)
     } else {
       setImageSrc(fallback)
@@ -38,6 +49,7 @@ const S3Image: React.FC<S3ImageProps> = ({
 
   const handleImageError = () => {
     console.log('🖼️ Image error occurred for:', src)
+    console.log('🖼️ Full URL was:', imageSrc)
     setHasError(true)
     setImageSrc(fallback)
   }

@@ -26,6 +26,10 @@ const translations = {
     'home.hero.subtitle': 'Качественные автомобили и оригинальные запчасти по лучшим ценам',
     'home.hero.viewCars': 'Смотреть автомобили',
     'home.hero.partsCatalog': 'Каталог запчастей',
+    'hero.title': 'Автомобили и запчасти',
+    'hero.subtitle': 'Качественные автомобили и оригинальные запчасти по лучшим ценам',
+    'hero.viewCars': 'Смотреть автомобили',
+    'hero.viewParts': 'Смотреть запчасти',
     'home.newArrivals': 'Новые поступления',
     'home.refresh': 'Обновить',
     'home.viewAll': 'Смотреть все',
@@ -201,6 +205,10 @@ const translations = {
     'home.hero.subtitle': 'Quality cars and original parts at the best prices',
     'home.hero.viewCars': 'View Cars',
     'home.hero.partsCatalog': 'Parts Catalog',
+    'hero.title': 'Cars and Parts',
+    'hero.subtitle': 'Quality cars and original parts at the best prices',
+    'hero.viewCars': 'View Cars',
+    'hero.viewParts': 'View Parts',
     'home.newArrivals': 'New Arrivals',
     'home.refresh': 'Refresh',
     'home.viewAll': 'View All',
@@ -376,6 +384,10 @@ const translations = {
     'home.hero.subtitle': 'Kwaliteitsauto\'s en originele onderdelen tegen de beste prijzen',
     'home.hero.viewCars': 'Auto\'s Bekijken',
     'home.hero.partsCatalog': 'Onderdelen Catalogus',
+    'hero.title': 'Auto\'s en Onderdelen',
+    'hero.subtitle': 'Kwaliteitsauto\'s en originele onderdelen tegen de beste prijzen',
+    'hero.viewCars': 'Auto\'s Bekijken',
+    'hero.viewParts': 'Onderdelen Bekijken',
     'home.newArrivals': 'Nieuwe Aankomsten',
     'home.refresh': 'Vernieuwen',
     'home.viewAll': 'Alles Bekijken',
@@ -551,6 +563,10 @@ const translations = {
     'home.hero.subtitle': 'Voitures de qualité et pièces originales aux meilleurs prix',
     'home.hero.viewCars': 'Voir les Voitures',
     'home.hero.partsCatalog': 'Catalogue de Pièces',
+    'hero.title': 'Voitures et Pièces',
+    'hero.subtitle': 'Voitures de qualité et pièces originales aux meilleurs prix',
+    'hero.viewCars': 'Voir les Voitures',
+    'hero.viewParts': 'Voir les Pièces',
     'home.newArrivals': 'Nouvelles Arrivées',
     'home.refresh': 'Actualiser',
     'home.viewAll': 'Voir Tout',
@@ -720,7 +736,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
   const [locale, setLocale] = useState<Locale>('nl')
 
   const t = (key: string): string => {
-    return translations[locale][key as keyof typeof translations['nl']] || key
+    return (translations[locale] as any)[key] || key
   }
 
   return (

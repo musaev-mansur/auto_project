@@ -46,7 +46,7 @@ export function DealerHeader() {
           <div className="flex items-center space-x-4">
             {admin && (
               <span className="text-sm text-gray-600">
-                Админ: {admin.first_name} {admin.last_name}
+                Админ: {admin.first_name}
               </span>
             )}
             <Link 
