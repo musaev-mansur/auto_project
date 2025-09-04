@@ -1,0 +1,40 @@
+{
+  "include": [
+    "backend",
+    "frontend"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/__pycache__",
+    "**/migrations",
+    "**/env",
+    "**/.venv"
+  ],
+  "pythonVersion": "3.8",
+  "pythonPlatform": "Linux",
+  "venvPath": ".",
+  "venv": "backend/env",
+  "extraPaths": [
+    "backend",
+    "backend/cars",
+    "backend/carspark_backend",
+    "backend/typings"
+  ],
+  "typeCheckingMode": "off",
+  "useLibraryCodeForTypes": true,
+  "reportMissingImports": "none",
+  "reportMissingTypeStubs": false,
+  "reportUnusedImport": "warning",
+  "reportUnusedClass": "warning",
+  "reportUnusedFunction": "warning",
+  "reportUnusedVariable": "warning",
+  "reportUndefinedVariable": "none",
+  "reportGeneralTypeIssues": "none",
+  "reportArgumentType": "none",
+  "reportAttributeAccessIssue": "none",
+  "reportOptionalMemberAccess": "none",
+  "reportOptionalSubscript": "none",
+  "reportOptionalIterable": "none",
+  "reportOptionalContextManager": "none",
+  "reportOptionalOperand": "none"
+}

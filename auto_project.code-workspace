@@ -1,0 +1,53 @@
+{
+  "folders": [
+    {
+      "name": "Root",
+      "path": "."
+    },
+    {
+      "name": "Backend",
+      "path": "./backend"
+    },
+    {
+      "name": "Frontend",
+      "path": "./frontend"
+    }
+  ],
+  "settings": {
+    "python.defaultInterpreterPath": "./backend/env/Scripts/python.exe",
+    "python.analysis.extraPaths": [
+      "./backend",
+      "./backend/cars",
+      "./backend/carspark_backend",
+      "./backend/typings"
+    ],
+    "python.analysis.typeCheckingMode": "off",
+    "python.analysis.diagnosticSeverityOverrides": {
+      "reportMissingImports": "none",
+      "reportMissingTypeStubs": "none",
+      "reportUndefinedVariable": "none",
+      "reportGeneralTypeIssues": "none",
+      "reportArgumentType": "none",
+      "reportAttributeAccessIssue": "none",
+      "reportOptionalMemberAccess": "none",
+      "reportOptionalSubscript": "none",
+      "reportOptionalIterable": "none",
+      "reportOptionalContextManager": "none",
+      "reportOptionalOperand": "none"
+    },
+    "python.linting.enabled": false,
+    "python.formatting.provider": "black",
+    "files.associations": {
+      "*.py": "python"
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "ms-python.python",
+      "ms-python.vscode-pylance",
+      "batisteo.vscode-django",
+      "ms-vscode.vscode-typescript-next",
+      "bradlc.vscode-tailwindcss"
+    ]
+  }
+}
