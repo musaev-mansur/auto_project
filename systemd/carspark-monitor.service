@@ -1,0 +1,18 @@
+[Unit]
+Description=CarsPark Health Monitor
+After=carspark.service
+Requires=carspark.service
+
+[Service]
+Type=simple
+User=carspark
+Group=carspark
+WorkingDirectory=/opt/carspark
+ExecStart=/opt/carspark/monitor.sh
+Restart=always
+RestartSec=30
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

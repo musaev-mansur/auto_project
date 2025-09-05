@@ -1,264 +1,237 @@
-# CarsPark - Docker Deployment
+# CarSpark - Docker Setup
 
-Этот проект содержит полную настройку для запуска CarsPark (frontend + backend) в одном Docker контейнере.
+Полная настройка и запуск CarSpark проекта с использованием Docker.
 
 ## 🚀 Быстрый запуск
 
-### 1. Создание .env файла
-
-Создайте файл `.env` в корне проекта:
-
+### Windows
 ```bash
-# Django settings
-SECRET_KEY=your-secret-key-here
-DEBUG=False
+# Обычный запуск
+start-docker.bat
 
-# AWS S3 settings
-AWS_ACCESS_KEY_ID=your-aws-access-key
-AWS_SECRET_ACCESS_KEY=your-aws-secret-key
-AWS_REGION=eu-west-1
-AWS_S3_BUCKET_NAME=your-s3-bucket-name
-
-# Database (опционально, для внешней БД)
-DATABASE_URL=postgresql://user:password@host:port/dbname
+# Фоновый режим
+start-docker-background.bat
 ```
 
-### 2. Запуск с Docker Compose
-
+### Linux/macOS
 ```bash
-# Сборка и запуск
+# Сделать скрипты исполняемыми
+chmod +x start-docker.sh start-docker-background.sh
+
+# Обычный запуск
+./start-docker.sh
+
+# Фоновый режим
+./start-docker-background.sh
+```
+
+### Ручной запуск
+```bash
+# Обычный запуск
 docker-compose up --build
 
-# Запуск в фоновом режиме
+# Фоновый режим
 docker-compose up -d --build
 ```
 
-### 3. Доступ к приложению
+## 📋 Предварительные требования
 
-- **Frontend**: http://localhost
-- **Backend API**: http://localhost/api/
-- **Admin Panel**: http://localhost/api/admin/
+- Docker (версия 20.10 или выше)
+- Docker Compose (версия 2.0 или выше)
 
-### 4. Учетные данные по умолчанию
+## 🏗️ Архитектура проекта
 
-- **Email**: admin@carspark.com
-- **Password**: admin123
+### Сервисы
 
-## 🏗️ Архитектура
+1. **db** - PostgreSQL база данных
+   - Порт: 5434
+   - База данных: carspark_db
+   - Пользователь: postgres
+   - Пароль: postgres
 
-### Docker контейнер включает:
-
-1. **Frontend (Next.js)**
-   - Собирается в production режиме
-   - Запускается на порту 3000
-
-2. **Backend (Django)**
-   - Запускается на порту 8000
-   - Поддерживает PostgreSQL и SQLite
+2. **backend** - Django API сервер
+   - Порт: 8000
    - Автоматическая инициализация БД
+   - Создание суперпользователя
 
-3. **Nginx**
-   - Проксирует запросы к frontend и backend
-   - Обрабатывает статические файлы
+3. **frontend** - Next.js приложение
+   - Порт: 3000
+   - Production оптимизированная сборка
 
-4. **PostgreSQL** (отдельный контейнер)
-   - База данных для production
+## 🌐 Доступные URL
+
+После запуска контейнеров доступны следующие URL:
+
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8000/api/
+- **Админ панель**: http://localhost:8000/admin/
+- **API документация**: http://localhost:8000/api/schema/swagger-ui/
+
+## 🔑 Учетные данные
+
+### Суперпользователь
+- **Email**: `admin@carspark.com`
+- **Пароль**: `admin123`
+
+### База данных
+- **Хост**: localhost:5434
+- **База данных**: carspark_db
+- **Пользователь**: postgres
+- **Пароль**: postgres
+
+## ⚙️ Переменные окружения
+
+Основные переменные окружения настраиваются в `docker-compose.yml`:
+
+### Backend
+- `DEBUG=True` - Режим отладки
+- `SECRET_KEY` - Секретный ключ Django
+- `DATABASE_URL` - URL подключения к PostgreSQL
+- `ALLOWED_HOSTS` - Разрешенные хосты
+- `CORS_ALLOWED_ORIGINS` - Разрешенные CORS источники
+- `USE_S3=False` - Отключение S3 для локальной разработки
+
+### Frontend
+- `NODE_ENV=production` - Режим production
+- `NEXT_PUBLIC_API_URL` - URL API backend
+- `NEXT_PUBLIC_BACKEND_URL` - URL backend сервера
+
+### AWS S3 (опционально)
+Для использования AWS S3 раскомментируйте и заполните:
+- `USE_S3=True`
+- `AWS_ACCESS_KEY_ID` - AWS Access Key ID
+- `AWS_SECRET_ACCESS_KEY` - AWS Secret Access Key
+- `AWS_REGION` - AWS регион
+- `AWS_S3_BUCKET_NAME` - Название S3 bucket
+
+## 🛠️ Полезные команды
+
+### Управление контейнерами
+```bash
+# Просмотр статуса
+docker-compose ps
+
+# Просмотр логов
+docker-compose logs -f
+
+# Просмотр логов конкретного сервиса
+docker-compose logs -f backend
+docker-compose logs -f frontend
+docker-compose logs -f db
+
+# Остановка контейнеров
+docker-compose down
+
+# Остановка с удалением volumes
+docker-compose down -v
+
+# Перезапуск
+docker-compose restart
+
+# Пересборка без кэша
+docker-compose build --no-cache
+```
+
+### Выполнение команд в контейнерах
+```bash
+# Backend
+docker-compose exec backend python manage.py shell
+docker-compose exec backend python manage.py createsuperuser
+docker-compose exec backend python manage.py migrate
+
+# Frontend
+docker-compose exec frontend sh
+
+# База данных
+docker-compose exec db psql -U postgres -d carspark_db
+```
+
+## 🔧 Разработка
+
+### Изменение кода
+Код приложений монтируется как volume, поэтому изменения в коде автоматически отражаются в контейнерах. Для применения изменений в зависимостях необходимо пересобрать контейнеры:
+
+```bash
+docker-compose up --build
+```
+
+### Подключение к базе данных
+Для подключения к PostgreSQL из внешних инструментов:
+- **Хост**: localhost
+- **Порт**: 5434
+- **База данных**: carspark_db
+- **Пользователь**: postgres
+- **Пароль**: postgres
+
+## 🐛 Решение проблем
+
+### Порт уже используется
+Если порты 3000, 8000 или 5434 уже используются, измените порты в `docker-compose.yml`:
+
+```yaml
+ports:
+  - "3001:3000"  # Вместо 3000:3000
+  - "8001:8000"  # Вместо 8000:8000
+  - "5435:5432"  # Вместо 5434:5432
+```
+
+### Проблемы с правами доступа
+На Linux/macOS могут возникнуть проблемы с правами доступа к файлам:
+
+```bash
+sudo chown -R $USER:$USER .
+```
+
+### Backend недоступен
+Убедитесь, что backend запущен и доступен по адресу http://localhost:8000
+
+### Очистка Docker
+Для полной очистки Docker (осторожно, удалит все неиспользуемые данные):
+
+```bash
+docker system prune -a
+docker volume prune
+```
 
 ## 📁 Структура файлов
 
 ```
-├── Dockerfile              # Многоэтапная сборка
-├── docker-compose.yml      # Оркестрация контейнеров
-├── .dockerignore          # Исключения для Docker
-├── backend/
-│   ├── init_db.py         # Скрипт инициализации БД
+auto_project/
+├── docker-compose.yml          # Основной docker-compose файл
+├── env.example                 # Пример переменных окружения
+├── start-docker.sh            # Скрипт запуска (Linux/macOS)
+├── start-docker.bat           # Скрипт запуска (Windows)
+├── start-docker-background.sh # Скрипт запуска в фоне (Linux/macOS)
+├── start-docker-background.bat# Скрипт запуска в фоне (Windows)
+├── README-Docker.md           # Эта документация
+├── backend/                   # Django backend
+│   ├── Dockerfile
+│   ├── docker-compose.yml
 │   └── ...
-└── frontend/
+└── frontend/                  # Next.js frontend
+    ├── Dockerfile
+    ├── docker-compose.yml
     └── ...
 ```
 
-## 🔧 Настройка
+## 🔒 Безопасность
 
-### Переменные окружения
+⚠️ **Важно**: Данная конфигурация предназначена для разработки. Для продакшена необходимо:
 
-| Переменная | Описание | По умолчанию |
-|------------|----------|--------------|
-| `SECRET_KEY` | Django secret key | - |
-| `DEBUG` | Django debug mode | False |
-| `DATABASE_URL` | PostgreSQL connection string | SQLite |
-| `AWS_ACCESS_KEY_ID` | AWS S3 access key | - |
-| `AWS_SECRET_ACCESS_KEY` | AWS S3 secret key | - |
-| `AWS_REGION` | AWS region | eu-west-1 |
-| `AWS_S3_BUCKET_NAME` | S3 bucket name | - |
+1. Изменить пароли по умолчанию
+2. Использовать сильные секретные ключи
+3. Настроить HTTPS
+4. Ограничить ALLOWED_HOSTS
+5. Отключить DEBUG режим
+6. Настроить файрвол
+7. Использовать reverse proxy (nginx)
 
-### Портфолио
+## 📞 Поддержка
 
-По умолчанию приложение запускается на порту 80. Для изменения:
+При возникновении проблем:
+1. Проверьте логи: `docker-compose logs -f`
+2. Убедитесь, что все порты свободны
+3. Проверьте, что Docker и Docker Compose установлены
+4. Попробуйте пересобрать контейнеры: `docker-compose up --build`
 
-```yaml
-# docker-compose.yml
-services:
-  app:
-    ports:
-      - "8080:80"  # Изменить на нужный порт
-```
-
-## 🛠️ Команды
-
-### Разработка
-
-```bash
-# Запуск в режиме разработки
-docker-compose up --build
-
-# Просмотр логов
-docker-compose logs -f app
-
-# Остановка
-docker-compose down
-
-# Пересборка
-docker-compose build --no-cache
-```
-
-### Production
-
-```bash
-# Запуск в production режиме
-docker-compose -f docker-compose.yml up -d
-
-# Проверка статуса
-docker-compose ps
-
-# Обновление
-docker-compose pull
-docker-compose up -d
-```
-
-## 🔍 Отладка
-
-### Просмотр логов
-
-```bash
-# Все сервисы
-docker-compose logs
-
-# Только приложение
-docker-compose logs app
-
-# Следить за логами
-docker-compose logs -f app
-```
-
-### Вход в контейнер
-
-```bash
-# Войти в контейнер приложения
-docker-compose exec app bash
-
-# Проверить процессы
-docker-compose exec app ps aux
-
-# Проверить Django
-docker-compose exec app python manage.py shell
-```
-
-### Проверка базы данных
-
-```bash
-# Подключиться к PostgreSQL
-docker-compose exec db psql -U postgres -d carspark
-
-# Создать миграции
-docker-compose exec app python manage.py makemigrations
-
-# Применить миграции
-docker-compose exec app python manage.py migrate
-```
-
-## 🚨 Устранение неполадок
-
-### Проблема: Контейнер не запускается
-
-```bash
-# Проверить логи
-docker-compose logs app
-
-# Проверить статус контейнеров
-docker-compose ps
-
-# Пересобрать образ
-docker-compose build --no-cache
-```
-
-### Проблема: База данных не подключается
-
-```bash
-# Проверить статус БД
-docker-compose ps db
-
-# Проверить логи БД
-docker-compose logs db
-
-# Пересоздать volume
-docker-compose down -v
-docker-compose up --build
-```
-
-### Проблема: Статические файлы не загружаются
-
-```bash
-# Собрать статические файлы
-docker-compose exec app python manage.py collectstatic --noinput
-
-# Проверить права доступа
-docker-compose exec app ls -la /app/backend/staticfiles
-```
-
-## 📊 Мониторинг
-
-### Проверка здоровья приложения
-
-```bash
-# Frontend
-curl http://localhost
-
-# Backend API
-curl http://localhost/api/health/
-
-# Admin panel
-curl http://localhost/api/admin/
-```
-
-### Метрики
-
-- **Frontend**: http://localhost (Next.js)
-- **Backend**: http://localhost/api/ (Django REST)
-- **Database**: localhost:5432 (PostgreSQL)
-
-## 🔐 Безопасность
-
-### Production рекомендации:
-
-1. **Измените пароли по умолчанию**
-2. **Используйте HTTPS**
-3. **Настройте firewall**
-4. **Регулярно обновляйте образы**
-5. **Используйте secrets для чувствительных данных**
-
-### Пример .env для production:
-
-```bash
-SECRET_KEY=your-very-secure-secret-key
-DEBUG=False
-DATABASE_URL=postgresql://user:strong-password@host:5432/dbname
-AWS_ACCESS_KEY_ID=your-aws-key
-AWS_SECRET_ACCESS_KEY=your-aws-secret
-AWS_REGION=eu-west-1
-AWS_S3_BUCKET_NAME=your-bucket
-```
-
-## 📝 Лицензия
-
-Этот проект лицензирован под MIT License.
 

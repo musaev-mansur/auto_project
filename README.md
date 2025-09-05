@@ -1,6 +1,6 @@
 # CarsPark - Car Management System
 
-A modern car dealership platform with multilingual support (RU/EN) and comprehensive car management features.
+A modern car dealership platform with multilingual support (RU/EN/NL/FR) and comprehensive car management features.
 
 ## 🌐 Live Demo
 
@@ -47,8 +47,8 @@ A modern car dealership platform with multilingual support (RU/EN) and comprehen
 - `password` - Hashed password
 - `name` - Admin name
 - `role` - Role (default: "admin")
-- `createdAt` - Creation date
-- `updatedAt` - Update date
+- `created_at` - Creation date
+- `updated_at` - Update date
 
 #### Car
 - `id` - Unique identifier
@@ -60,11 +60,11 @@ A modern car dealership platform with multilingual support (RU/EN) and comprehen
 - `transmission` - Transmission type
 - `fuel` - Fuel type
 - `drive` - Drive type
-- `bodyType` - Body type
+- `body_type` - Body type
 - `color` - Color
 - `power` - Engine power (hp)
-- `engineVolume` - Engine volume (L)
-- `euroStandard` - Euro standard
+- `engine_volume` - Engine volume (L)
+- `euro_standard` - Euro standard
 - `vin` - VIN number (unique)
 - `condition` - Condition
 - `customs` - Customs cleared
@@ -78,15 +78,16 @@ A modern car dealership platform with multilingual support (RU/EN) and comprehen
 - `photos` - Photos (JSON array)
 - `status` - Status (draft/published/sold)
 - `views` - View count
-- `createdAt` - Creation date
-- `updatedAt` - Update date
-- `adminId` - Creator admin ID
+- `created_at` - Creation date
+- `updated_at` - Update date
+- `admin_id` - Creator admin ID
 
 ## 🔌 API Endpoints
 
 ### Authentication
-- `POST /api/auth/register` - Register admin
 - `POST /api/auth/login` - Admin login
+- `POST /api/auth/logout` - Admin logout
+- `GET /api/auth/profile` - Get admin profile
 
 ### Cars
 - `GET /api/cars` - Get all cars (with pagination and filters)
@@ -95,15 +96,43 @@ A modern car dealership platform with multilingual support (RU/EN) and comprehen
 - `PUT /api/cars/[id]` - Update car
 - `DELETE /api/cars/[id]` - Delete car
 
+### Parts
+- `GET /api/parts` - Get all parts (with pagination and filters)
+- `POST /api/parts` - Create new part
+- `GET /api/parts/[id]` - Get specific part
+- `PUT /api/parts/[id]` - Update part
+- `DELETE /api/parts/[id]` - Delete part
+
 ### Admins
 - `GET /api/admins` - Get all admins (with pagination)
 
 ### File Upload & S3 Management
 - `POST /api/images/upload` - Upload images to Amazon S3
 - `DELETE /api/images/delete` - Delete images from S3
-- `POST /api/images/delete` - Bulk delete images from S3
+
+### API Documentation
+- `GET /api/docs/` - Swagger UI documentation
+- `GET /api/redoc/` - ReDoc documentation
+- `GET /api/schema/` - OpenAPI schema
+
+## 🚀 Быстрый запуск
+
+### Windows
+```cmd
+start-local.bat
+```
+
+### Linux/Mac
+```bash
+chmod +x start-local.sh
+./start-local.sh
+```
+
+Приложение будет доступно по адресу: **http://localhost:80**
 
 ## 🛠️ Installation & Setup
+
+### Local Development
 
 1. **Clone the repository:**
 ```bash
@@ -111,19 +140,16 @@ git clone <repository-url>
 cd auto_project
 ```
 
-2. **Install dependencies:**
-```bash
-npm install
-# or
-pnpm install
-```
-
-3. **Set up environment variables:**
+2. **Set up environment variables:**
 Create a `.env` file in the root directory:
 ```env
-DATABASE_URL="file:./dev.db"
-NEXTAUTH_SECRET="your-secret-key"
-RENDER="false"
+# Django Settings
+SECRET_KEY="your-django-secret-key"
+DEBUG=True
+ALLOWED_HOSTS=localhost,127.0.0.1
+
+# Database
+DATABASE_URL="sqlite:///db.sqlite3"
 
 # AWS S3 Configuration (optional for local development)
 AWS_ACCESS_KEY_ID="your-aws-access-key-id"
@@ -132,24 +158,44 @@ AWS_REGION="eu-west-1"
 AWS_S3_BUCKET_NAME="aslan-auto-img"
 ```
 
+3. **Install Python dependencies:**
+```bash
+cd backend
+pip install -r requirements.txt
+```
+
 4. **Set up the database:**
 ```bash
-npx prisma migrate dev
-npx prisma generate
+python manage.py migrate
+python manage.py createsuperuser
 ```
 
-5. **Seed the database with sample data:**
+5. **Start the development server:**
 ```bash
-npm run db:seed
-```
+# Backend (Django)
+python manage.py runserver
 
-6. **Start the development server:**
-```bash
+# Frontend (Next.js) - in another terminal
+cd frontend
+npm install
 npm run dev
 ```
 
-7. **Open your browser:**
-Navigate to [http://localhost:3000](http://localhost:3000)
+6. **Open your browser:**
+- Frontend: [http://localhost:3000](http://localhost:3000)
+- Backend API: [http://localhost:8000](http://localhost:8000)
+- API Docs: [http://localhost:8000/api/docs/](http://localhost:8000/api/docs/)
+
+### Docker Deployment
+
+1. **Build and run with Docker Compose:**
+```bash
+docker-compose up --build -d
+```
+
+2. **Access the application:**
+- Application: [http://localhost:80](http://localhost:80)
+- API Documentation: [http://localhost:80/api/docs/](http://localhost:80/api/docs/)
 
 ## ☁️ Amazon S3 Setup (Optional)
 
@@ -195,35 +241,19 @@ npm run migrate:s3
 
 ## 🧪 Test Data
 
-After running `npm run db:seed`, the following test data is created:
+After running migrations, you can create test data:
 
 ### Admin Account
 - **Email:** `admin@example.com`
 - **Password:** `admin123`
 
-### Sample Cars
-- **BMW X5** (2018) - Luxury SUV with premium features
-- **Mercedes-Benz C-Class** (2019) - Executive sedan
-- **Audi A4** (2020) - Modern business car
-
 > Use the admin credentials to access the dealer dashboard at `/dealer`
 
 ## 📚 API Usage Examples
 
-### Register Admin
-```bash
-curl -X POST http://localhost:3000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "newadmin@example.com",
-    "password": "password123",
-    "name": "New Admin"
-  }'
-```
-
 ### Admin Login
 ```bash
-curl -X POST http://localhost:3000/api/auth/login \
+curl -X POST http://localhost:8000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "admin@example.com",
@@ -234,18 +264,18 @@ curl -X POST http://localhost:3000/api/auth/login \
 ### Get Cars with Filters
 ```bash
 # Get published cars with pagination
-curl "http://localhost:3000/api/cars?page=1&limit=10&status=published"
+curl "http://localhost:8000/api/cars?page=1&limit=10&status=published"
 
 # Get cars by brand
-curl "http://localhost:3000/api/cars?brand=BMW"
+curl "http://localhost:8000/api/cars?brand=BMW"
 
 # Get cars with price range
-curl "http://localhost:3000/api/cars?priceFrom=20000&priceTo=50000"
+curl "http://localhost:8000/api/cars?price_from=20000&price_to=50000"
 ```
 
 ### Create New Car
 ```bash
-curl -X POST http://localhost:3000/api/cars \
+curl -X POST http://localhost:8000/api/cars \
   -H "Content-Type: application/json" \
   -d '{
     "brand": "Toyota",
@@ -255,11 +285,11 @@ curl -X POST http://localhost:3000/api/cars \
     "transmission": "automatic",
     "fuel": "petrol",
     "drive": "front",
-    "bodyType": "sedan",
+    "body_type": "sedan",
     "color": "Silver",
     "power": 200,
-    "engineVolume": 2.5,
-    "euroStandard": "Euro 6",
+    "engine_volume": 2.5,
+    "euro_standard": "Euro 6",
     "vin": "4T1B11HK5KU123456",
     "condition": "excellent",
     "customs": true,
@@ -285,10 +315,12 @@ curl -X POST http://localhost:3000/api/cars \
 - **Lucide React** - Beautiful icons
 
 ### Backend
-- **Next.js API Routes** - Full-stack framework
-- **Prisma** - Type-safe ORM
-- **SQLite** - Local database (PostgreSQL in production)
-- **bcryptjs** - Password hashing
+- **Django 5.0** - Python web framework
+- **Django REST Framework** - API development
+- **Django ORM** - Database abstraction layer
+- **PostgreSQL** - Production database
+- **SQLite** - Local development database
+- **drf-spectacular** - OpenAPI documentation
 
 ### Features
 - **Multilingual Support** - i18n with React Context (RU/EN/NL/FR)
@@ -296,12 +328,14 @@ curl -X POST http://localhost:3000/api/cars \
 - **Image Upload** - Drag & drop with preview and validation
 - **Responsive Design** - Mobile-first approach
 - **Form Validation** - Client and server-side validation
+- **API Documentation** - Swagger UI and ReDoc
 
 ### Deployment
-- **Render** - Cloud hosting platform
+- **Docker** - Containerization
+- **Docker Compose** - Multi-container orchestration
+- **Nginx** - Reverse proxy and static file serving
 - **PostgreSQL** - Production database
 - **Amazon S3** - Cloud image storage
-- **Static File Serving** - Optimized image delivery
 
 ## 🤝 Contributing
 
@@ -322,4 +356,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Made with ❤️ using Next.js and modern web technologies**
+**Made with ❤️ using Django, Next.js and modern web technologies**

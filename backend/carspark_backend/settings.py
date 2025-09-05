@@ -149,10 +149,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
-MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Default primary key field type
@@ -167,10 +164,6 @@ AUTH_USER_MODEL = 'cars.Admin'
 CORS_ALLOW_ALL_ORIGINS = DEBUG
 CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:3000').split(',')
 CORS_ALLOW_CREDENTIALS = True
-CSRF_TRUSTED_ORIGINS = os.getenv(
-    'CSRF_TRUSTED_ORIGINS',
-    'https://haam-db.onrender.com,http://localhost:3000'
-).split(',')
 CORS_ALLOW_HEADERS = list(default_headers) + [
   'authorization',
   'content-type',
@@ -195,6 +188,32 @@ AWS_ACCESS_KEY_ID = config('AWS_ACCESS_KEY_ID', default='')
 AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY', default='')
 AWS_REGION = config('AWS_REGION', default='eu-west-1')
 AWS_S3_BUCKET_NAME = config('AWS_S3_BUCKET_NAME', default='aslan-auto-img')
+
+# AWS S3 Static Files Configuration
+# Отключаем S3 для локальной разработки
+USE_S3 = config('USE_S3', default=False, cast=bool)
+
+if USE_S3 and AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY:
+    # Используем S3 для статических файлов
+    AWS_STORAGE_BUCKET_NAME = AWS_S3_BUCKET_NAME
+    AWS_S3_CUSTOM_DOMAIN = f'{AWS_S3_BUCKET_NAME}.s3.amazonaws.com'
+    AWS_S3_OBJECT_PARAMETERS = {
+        'CacheControl': 'max-age=86400',
+    }
+    AWS_DEFAULT_ACL = 'public-read'
+    AWS_S3_FILE_OVERWRITE = False
+    
+    # Настройки для статических файлов
+    STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/static/'
+    
+    # Настройки для медиа файлов
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
+else:
+    # Локальные настройки для разработки
+    STATIC_URL = 'static/'
+    MEDIA_URL = '/media/'
 
 # File upload settings
 MAX_UPLOAD_SIZE = 5 * 1024 * 1024  # 5MB
@@ -221,4 +240,3 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT   = False  # Отключаем для локальной разработки
 SESSION_COOKIE_SECURE = False  # Отключаем для локальной разработки
 CSRF_COOKIE_SECURE    = False  # Отключаем для локальной разработки
-

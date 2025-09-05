@@ -270,6 +270,11 @@ class ImageUploadView(APIView):
                 }, status=400)
             
             # Настройки AWS S3
+            if not getattr(settings, 'USE_S3', False):
+                return JsonResponse({
+                    'success': False,
+                    'error': 'S3 upload is disabled. Set USE_S3=True to enable S3 uploads.'
+                }, status=500)
             
             if not settings.AWS_ACCESS_KEY_ID or not settings.AWS_SECRET_ACCESS_KEY:
                 return JsonResponse({
@@ -352,6 +357,12 @@ class ImageDeleteView(APIView):
                 }, status=400)
             
             # Настройки AWS S3
+            if not getattr(settings, 'USE_S3', False):
+                return JsonResponse({
+                    'success': False,
+                    'error': 'S3 upload is disabled. Set USE_S3=True to enable S3 uploads.'
+                }, status=500)
+            
             if not settings.AWS_ACCESS_KEY_ID or not settings.AWS_SECRET_ACCESS_KEY:
                 return JsonResponse({
                     'success': False,
