@@ -135,10 +135,10 @@ class CarViewSet(viewsets.ModelViewSet):
     
     def get_permissions(self):
         """
-        Разрешаем публичный доступ для чтения, 
-        аутентификация требуется только для создания/редактирования/удаления
+        Разрешаем публичный доступ для чтения и создания, 
+        аутентификация требуется только для редактирования/удаления
         """
-        if self.action in ['list', 'retrieve']:
+        if self.action in ['list', 'retrieve', 'create']:
             permission_classes = [permissions.AllowAny]
         else:
             permission_classes = [permissions.IsAuthenticated]

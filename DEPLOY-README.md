@@ -34,7 +34,7 @@
 ### 1. Подготовка сервера
 ```bash
 # На свежем Ubuntu сервере
-wget https://raw.githubusercontent.com/your-repo/auto_project/main/server-setup.sh
+wget https://raw.githubusercontent.com/musaev-mansur/auto_project/main/server-setup.sh
 chmod +x server-setup.sh
 ./server-setup.sh
 ```
@@ -42,7 +42,7 @@ chmod +x server-setup.sh
 ### 2. Клонирование проекта
 ```bash
 cd /opt
-git clone https://github.com/your-repo/auto_project.git carspark
+git clone https://github.com/musaev-mansur/auto_project carspark
 cd carspark
 ```
 
