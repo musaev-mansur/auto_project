@@ -200,15 +200,17 @@ if USE_S3 and AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY:
     AWS_S3_OBJECT_PARAMETERS = {
         'CacheControl': 'max-age=86400',
     }
-    AWS_DEFAULT_ACL = 'public-read'
+    AWS_DEFAULT_ACL = None  # Отключаем ACL для новых S3 buckets
     AWS_S3_FILE_OVERWRITE = False
+    AWS_S3_VERIFY = True
+    AWS_QUERYSTRING_AUTH = False
     
     # Настройки для статических файлов
-    STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    STATICFILES_STORAGE = 'carspark_backend.storage.S3StaticStorage'
     STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/static/'
     
     # Настройки для медиа файлов
-    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    DEFAULT_FILE_STORAGE = 'carspark_backend.storage.S3MediaStorage'
     MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
 else:
     # Локальные настройки для разработки
