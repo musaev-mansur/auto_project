@@ -33,7 +33,7 @@ services:
     ports:
       - "127.0.0.1:8000:8000"
     environment:
-      - DEBUG=False
+      - DEBUG=True
       - SECRET_KEY=${SECRET_KEY}
       - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-carspark_db}
       - ALLOWED_HOSTS=${ALLOWED_HOSTS}
@@ -67,9 +67,6 @@ services:
     build: 
       context: ./frontend
       dockerfile: Dockerfile
-      args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
-        NEXT_PUBLIC_BACKEND_URL: ${NEXT_PUBLIC_BACKEND_URL}
     ports:
       - "127.0.0.1:3000:3000"
     environment:
