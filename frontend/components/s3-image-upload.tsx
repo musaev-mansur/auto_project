@@ -122,7 +122,7 @@ const S3ImageUpload: React.FC<S3ImageUploadProps> = ({
       validFiles.forEach((file) => formData.append('images', file))
 
       console.log('📤 Отправляем запрос на загрузку с carId:', carId)
-      const res = await fetch('http://localhost:8000/api/images/upload/', { 
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/images/upload/`, { 
         method: 'POST', 
         body: formData 
       })
@@ -200,7 +200,7 @@ const S3ImageUpload: React.FC<S3ImageUploadProps> = ({
         return
       }
 
-      const res = await fetch('http://localhost:8000/api/images/delete/', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/images/delete/`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ imageKey: s3Key }),

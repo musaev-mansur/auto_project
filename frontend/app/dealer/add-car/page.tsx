@@ -118,7 +118,7 @@ export default function AddCarPage() {
         photos: carData.photos || [],
       }
 
-      const response = await fetch('http://localhost:8000/api/cars/', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cars/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include', // Важно для Django сессий

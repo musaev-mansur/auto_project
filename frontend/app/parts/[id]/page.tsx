@@ -76,7 +76,7 @@ export default function PartDetailPage() {
     try {
       setLoading(true)
       console.log('🔍 Загружаем запчасть с ID:', params.id)
-      const response = await fetch(`http://localhost:8000/api/parts/${params.id}/`)
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/parts/${params.id}/`)
       console.log('📥 Response status:', response.status)
       const data = await response.json()
       console.log('📥 Response data:', data)

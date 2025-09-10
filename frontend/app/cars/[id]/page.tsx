@@ -75,7 +75,7 @@ export default function CarDetailPage() {
       if (!params.id) return
       setLoading(true)
       try {
-        const response = await fetch(`http://localhost:8000/api/cars/${params.id}/`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cars/${params.id}/`, {
       credentials: 'include'
     })
         if (!response.ok) {

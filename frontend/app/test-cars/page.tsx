@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Car } from '@/frontend/types/types'
+import { Car } from '@/types/types'
 
 // Функция для преобразования данных из API в формат Car
 function transformCarFromAPI(carData: any): Car {
@@ -15,11 +15,11 @@ function transformCarFromAPI(carData: any): Car {
     transmission: carData.transmission as Car['transmission'],
     fuel: carData.fuel as Car['fuel'],
     drive: carData.drive as Car['drive'],
-    bodyType: carData.bodyType as Car['bodyType'],
+    body_type: carData.bodyType as Car['body_type'],
     color: carData.color,
     power: carData.power,
-    engineVolume: carData.engineVolume,
-    euroStandard: carData.euroStandard,
+    engine_volume: carData.engine_volume,
+    euro_standard: carData.euro_standard,
     vin: carData.vin,
     condition: carData.condition as Car['condition'],
     customs: carData.customs,
@@ -32,9 +32,10 @@ function transformCarFromAPI(carData: any): Car {
     description: carData.description,
     photos: typeof carData.photos === 'string' ? JSON.parse(carData.photos) : carData.photos,
     status: carData.status as Car['status'],
-    createdAt: carData.createdAt,
+    created_at: carData.created_at,
     views: carData.views,
-    admin: carData.admin
+    admin: carData.admin,
+    updated_at: carData.updated_at
   }
 }
 
@@ -48,7 +49,7 @@ export default function TestCarsPage() {
       setLoading(true)
       try {
         console.log('Testing cars fetch...')
-        const response = await fetch('http://localhost:8000/api/cars/?status=published', {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cars/?status=published`, {
       credentials: 'include'
     })
         console.log('Response status:', response.status)

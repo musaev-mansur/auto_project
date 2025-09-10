@@ -44,7 +44,7 @@ export function ImageUpload({
       })
 
       // Загружаем файлы на сервер
-      const response = await fetch('http://localhost:8000/api/upload/', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upload/`, {
         method: 'POST',
         body: formData
       })

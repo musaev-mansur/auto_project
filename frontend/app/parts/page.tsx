@@ -92,7 +92,7 @@ function PartsContent() {
       setLoading(true)
       const params = new URLSearchParams(searchParams)
       
-      const response = await fetch(`http://localhost:8000/api/parts/?${params.toString()}`)
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/parts/?${params.toString()}`)
       const data = await response.json()
 
       if (response.ok) {

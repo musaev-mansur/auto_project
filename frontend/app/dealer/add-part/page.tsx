@@ -106,7 +106,7 @@ export default function AddPartPage() {
         // Не отправляем admin_id - он будет установлен автоматически в perform_create
       }
 
-      const response = await fetch('http://localhost:8000/api/parts/', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/parts/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include', // Важно для Django сессий

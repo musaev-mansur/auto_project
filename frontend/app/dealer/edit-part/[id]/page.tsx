@@ -105,7 +105,7 @@ export default function EditPartPage() {
       setFetchLoading(true)
       try {
         console.log('🔍 Загружаем запчасть с ID:', partId)
-        const response = await fetch(`http://localhost:8000/api/parts/${partId}/`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/parts/${partId}/`, {
           credentials: 'include' // Важно для Django сессий
         })
         console.log('📥 Response status:', response.status)
@@ -186,7 +186,7 @@ export default function EditPartPage() {
 
       console.log('Обновляем данные запчасти:', finalPartData)
 
-      const response = await fetch(`http://localhost:8000/api/parts/${partId}/`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/parts/${partId}/`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include', // Важно для Django сессий

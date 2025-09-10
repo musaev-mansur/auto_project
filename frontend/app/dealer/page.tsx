@@ -111,7 +111,7 @@ export default function DealerDashboard() {
     setLoading(true)
     try {
       console.log('Загружаем автомобили для панели дилера...')
-      const response = await fetch('http://localhost:8000/api/cars/', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cars/`, {
         credentials: 'include'
       })
       console.log('Response status:', response.status)
@@ -143,7 +143,7 @@ export default function DealerDashboard() {
 
   const fetchParts = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/parts/', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/parts/`, {
         credentials: 'include'
       })
       if (response.ok) {
@@ -161,7 +161,7 @@ export default function DealerDashboard() {
     }
 
     try {
-      const response = await fetch(`http://localhost:8000/api/parts/${partId}/`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/parts/${partId}/`, {
         method: 'DELETE',
         credentials: 'include'
       })
@@ -181,7 +181,7 @@ export default function DealerDashboard() {
 
   const handlePartStatusChange = async (partId: number, newStatus: string) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/parts/${partId}/`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/parts/${partId}/`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -227,7 +227,7 @@ export default function DealerDashboard() {
     }
 
     try {
-      const response = await fetch(`http://localhost:8000/api/cars/${carId}/`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cars/${carId}/`, {
         method: 'DELETE',
         credentials: 'include'
       })
@@ -247,7 +247,7 @@ export default function DealerDashboard() {
 
   const handleStatusChange = async (carId: string, newStatus: string) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/cars/${carId}/`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cars/${carId}/`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

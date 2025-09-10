@@ -111,7 +111,7 @@ export default function EditCarPage() {
       if (!params.id) return
       setFetchLoading(true)
       try {
-        const response = await fetch(`http://localhost:8000/api/cars/${params.id}/`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cars/${params.id}/`, {
         credentials: 'include'
       })
         if (!response.ok) {
@@ -207,7 +207,7 @@ export default function EditCarPage() {
 
       console.log('Обновляем данные автомобиля:', finalCarData)
 
-      const response = await fetch(`http://localhost:8000/api/cars/${params.id}/`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cars/${params.id}/`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
