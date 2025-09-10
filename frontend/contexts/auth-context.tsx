@@ -67,7 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       console.log('🔐 Попытка входа с:', { email, password: '***' })
       
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL
       const response = await fetch(`${apiUrl}/login/`, {
         method: 'POST',
         headers: {
@@ -99,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL
       await fetch(`${apiUrl}/logout/`, {
         method: 'POST',
         credentials: 'include'
