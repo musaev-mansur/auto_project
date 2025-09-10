@@ -32,6 +32,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         // Проверяем сессию на сервере
         const apiUrl = process.env.NEXT_PUBLIC_API_URL
+        console.log('🔍 API URL:', apiUrl)
+        console.log('🔍 Все env переменные:', process.env)
+        
+        if (!apiUrl) {
+          console.error('❌ NEXT_PUBLIC_API_URL не определен!')
+          return
+        }
+        
         const response = await fetch(`${apiUrl}/profile/`, {
           credentials: 'include'
         })

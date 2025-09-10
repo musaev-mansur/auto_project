@@ -11,6 +11,9 @@ import {
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
 
+console.log('🔍 API_BASE_URL в api.ts:', API_BASE_URL)
+console.log('🔍 Все env переменные в api.ts:', process.env)
+
 // Создаем axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
