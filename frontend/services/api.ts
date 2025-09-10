@@ -9,7 +9,7 @@ import {
   ApiResponse 
 } from '../types/types'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
 
 // Создаем axios instance
 const api = axios.create({
@@ -43,9 +43,9 @@ api.interceptors.response.use(
 // Auth API - используем Django сессии
 export const authAPI = {
   login: async (credentials: LoginCredentials) => {
-    console.log('🌐 Отправка запроса на:', `${API_BASE_URL}/api/login/`)
+    console.log('🌐 Отправка запроса на:', `${API_BASE_URL}/login/`)
     console.log('📤 Данные:', credentials)
-    const response = await api.post('/api/login/', credentials, {
+    const response = await api.post('/login/', credentials, {
       withCredentials: true // Важно для работы с сессиями
     })
     console.log('📥 Ответ:', response.data)
@@ -53,14 +53,14 @@ export const authAPI = {
   },
 
   logout: async () => {
-    const response = await api.post('/api/logout/', {}, {
+    const response = await api.post('/logout/', {}, {
       withCredentials: true
     })
     return response.data
   },
 
   getProfile: async () => {
-    const response = await api.get('/api/profile/', {
+    const response = await api.get('/profile/', {
       withCredentials: true
     })
     return response.data
@@ -70,37 +70,37 @@ export const authAPI = {
 // Cars API
 export const carsAPI = {
   getCars: async (params?: any) => {
-    const response = await api.get<ApiResponse<Car>>('/api/cars/', { params })
+    const response = await api.get<ApiResponse<Car>>('/cars/', { params })
     return response.data
   },
 
   getCar: async (id: number) => {
-    const response = await api.get<Car>(`/api/cars/${id}/`)
+    const response = await api.get<Car>(`/cars/${id}/`)
     return response.data
   },
 
   createCar: async (data: CreateCarData) => {
-    const response = await api.post<Car>('/api/cars/', data)
+    const response = await api.post<Car>('/cars/', data)
     return response.data
   },
 
   updateCar: async (id: number, data: Partial<CreateCarData>) => {
-    const response = await api.put<Car>(`/api/cars/${id}/`, data)
+    const response = await api.put<Car>(`/cars/${id}/`, data)
     return response.data
   },
 
   deleteCar: async (id: number) => {
-    const response = await api.delete(`/api/cars/${id}/`)
+    const response = await api.delete(`/cars/${id}/`)
     return response.data
   },
 
   incrementViews: async (id: number) => {
-    const response = await api.post(`/api/cars/${id}/increment_views/`)
+    const response = await api.post(`/cars/${id}/increment_views/`)
     return response.data
   },
 
   getStats: async () => {
-    const response = await api.get('/api/cars/stats/')
+    const response = await api.get('/cars/stats/')
     return response.data
   },
 }
@@ -108,37 +108,37 @@ export const carsAPI = {
 // Parts API
 export const partsAPI = {
   getParts: async (params?: any) => {
-    const response = await api.get<ApiResponse<Part>>('/api/parts/', { params })
+    const response = await api.get<ApiResponse<Part>>('/parts/', { params })
     return response.data
   },
 
   getPart: async (id: number) => {
-    const response = await api.get<Part>(`/api/parts/${id}/`)
+    const response = await api.get<Part>(`/parts/${id}/`)
     return response.data
   },
 
   createPart: async (data: CreatePartData) => {
-    const response = await api.post<Part>('/api/parts/', data)
+    const response = await api.post<Part>('/parts/', data)
     return response.data
   },
 
   updatePart: async (id: number, data: Partial<CreatePartData>) => {
-    const response = await api.put<Part>(`/api/parts/${id}/`, data)
+    const response = await api.put<Part>(`/parts/${id}/`, data)
     return response.data
   },
 
   deletePart: async (id: number) => {
-    const response = await api.delete(`/api/parts/${id}/`)
+    const response = await api.delete(`/parts/${id}/`)
     return response.data
   },
 
   incrementViews: async (id: number) => {
-    const response = await api.post(`/api/parts/${id}/increment_views/`)
+    const response = await api.post(`/parts/${id}/increment_views/`)
     return response.data
   },
 
   getStats: async () => {
-    const response = await api.get('/api/parts/stats/')
+    const response = await api.get('/parts/stats/')
     return response.data
   },
 }
@@ -146,27 +146,27 @@ export const partsAPI = {
 // Admins API
 export const adminsAPI = {
   getAdmins: async (params?: any) => {
-    const response = await api.get<ApiResponse<Admin>>('/api/admins/', { params })
+    const response = await api.get<ApiResponse<Admin>>('/admins/', { params })
     return response.data
   },
 
   getAdmin: async (id: number) => {
-    const response = await api.get<Admin>(`/api/admins/${id}/`)
+    const response = await api.get<Admin>(`/admins/${id}/`)
     return response.data
   },
 
   createAdmin: async (data: any) => {
-    const response = await api.post<Admin>('/api/admins/', data)
+    const response = await api.post<Admin>('/admins/', data)
     return response.data
   },
 
   updateAdmin: async (id: number, data: any) => {
-    const response = await api.put<Admin>(`/api/admins/${id}/`, data)
+    const response = await api.put<Admin>(`/admins/${id}/`, data)
     return response.data
   },
 
   deleteAdmin: async (id: number) => {
-    const response = await api.delete(`/api/admins/${id}/`)
+    const response = await api.delete(`/admins/${id}/`)
     return response.data
   },
 }
