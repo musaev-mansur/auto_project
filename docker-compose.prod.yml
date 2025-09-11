@@ -2,6 +2,8 @@ services:
   # PostgreSQL Database
   db:
     image: postgres:15
+    env_file:
+      - .env
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-carspark_db}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
@@ -32,6 +34,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "127.0.0.1:8000:8000"
+    env_file:
+      - .env
     environment:
       - DEBUG=True
       - SECRET_KEY=${SECRET_KEY}
@@ -72,6 +76,8 @@ services:
         NEXT_PUBLIC_BACKEND_URL: ${NEXT_PUBLIC_BACKEND_URL}
     ports:
       - "127.0.0.1:3000:3000"
+    env_file:
+      - .env
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
@@ -89,6 +95,14 @@ services:
     networks:
       - carspark-network
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
       interval: 30s
