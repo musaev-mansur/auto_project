@@ -72,13 +72,13 @@ def main():
     print("👤 Создание суперпользователя...")
     try:
         from cars.models import Admin
-        if not Admin.objects.filter(email='admin@carspark.com').exists():
+        if not Admin.objects.filter(email=os.getenv('ADMIN_EMAIL')).exists():
             admin = Admin.objects.create_superuser(
                 username='admin',
-                email='admin@carspark.com',
-                password='admin123',
-                first_name='Admin',
-                last_name='CarSpark',
+                email=os.getenv('ADMIN_EMAIL'),
+                password=os.getenv('ADMIN_PASSWORD'),
+                first_name=os.getenv('ADMIN_FIRST_NAME'),
+                last_name= os.getenv('ADMIN_LAST_NAME'),
                 role='admin'
             )
             print(f"✅ Суперпользователь создан: {admin.email}")
@@ -87,15 +87,5 @@ def main():
     except Exception as e:
         print(f"⚠️ Ошибка при создании суперпользователя: {e}")
     
-    # # Загрузка тестовых данных
-    # print("📊 Загрузка тестовых данных...")
-    # try:
-    #     execute_from_command_line(['manage.py', 'shell', '-c', 'exec(open("seed_data.py").read())'])
-    #     print("✅ Тестовые данные загружены")
-    # except Exception as e:
-    #     print(f"⚠️ Ошибка при загрузке тестовых данных: {e}")
-    
-    # print("🎉 Инициализация завершена!")
-
 if __name__ == '__main__':
     main()

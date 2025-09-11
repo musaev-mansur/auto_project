@@ -112,7 +112,6 @@ export default function LoginPage() {
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
                     className="pl-10"
-                    placeholder="admin@carspark.be"
                   />
                 </div>
               </div>
@@ -132,7 +131,6 @@ export default function LoginPage() {
                     value={formData.password}
                     onChange={(e) => handleInputChange('password', e.target.value)}
                     className="pl-10"
-                    placeholder="admin2025_*"
                   />
                 </div>
               </div>
