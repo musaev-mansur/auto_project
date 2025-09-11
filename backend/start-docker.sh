@@ -25,5 +25,3 @@ docker-compose up --build
 echo "✅ Backend запущен на http://localhost:8000"
 echo "📊 API документация доступна на http://localhost:8000/api/schema/swagger-ui/"
 echo "👤 Админ панель доступна на http://localhost:8000/admin/"
-echo "   Email: admin@carspark.be"
-echo "   Пароль: admin2025_*"

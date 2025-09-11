@@ -16,10 +16,10 @@ def create_superuser():
     try:
         print('🔧 Создание суперпользователя...')
         
-        email = 'admin@carspark.be'
-        password = 'admin2025_*'
-        first_name = 'Admin'
-        last_name = 'CarSpark'
+        email = os.getenv('ADMIN_EMAIL')
+        password = os.getenv('ADMIN_PASSWORD')
+        first_name = os.getenv('ADMIN_FIRST_NAME')
+        last_name = os.getenv('ADMIN_LAST_NAME')
         
         # Проверяем, существует ли уже пользователь
         existing_admin = Admin.objects.filter(email=email).first()

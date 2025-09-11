@@ -72,10 +72,6 @@ docker-compose up -d --build
 
 ## Учетные данные по умолчанию
 
-### Суперпользователь
-- **Email**: admin@carspark.be
-- **Пароль**: admin2025_*
-
 ### База данных
 - **Хост**: localhost:5432
 - **База данных**: carspark_db
