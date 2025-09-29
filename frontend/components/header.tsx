@@ -6,6 +6,7 @@ import { Car, Phone, MessageCircle, Menu, X, Globe } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useLocale } from '@/contexts/locale-context'
 import type { Locale } from '@/contexts/locale-context'
+import Image from 'next/image'
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -27,8 +28,15 @@ export function Header() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center space-x-2">
-            <Car className="h-8 w-8 text-blue-600" />
-            <span className="text-xl font-bold">CarsPark</span>
+            <Image 
+                src="/sport-car.png" 
+                alt="azautos Logo" 
+                width={120}
+                height={40}
+                className="h-10 w-auto"
+                priority
+              />
+            <span className="text-xl font-bold">azautos.be</span>
           </Link>
           
           <nav className="hidden md:flex items-center space-x-6">

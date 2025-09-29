@@ -62,8 +62,8 @@ success "Деплой завершен!"
 
 echo ""
 log "Проверьте работу:"
-echo "curl https://carspark.be/api/cars/"
-echo "curl https://carspark.be"
+echo "curl https://azautos.be/api/cars/"
+echo "curl https://azautos.be"
 echo ""
 
 log "Если нужно настроить SSL:"

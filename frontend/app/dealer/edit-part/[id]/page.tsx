@@ -216,7 +216,7 @@ export default function EditPartPage() {
   if (fetchLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 py-8">
+        <div className="">
           <div className="flex items-center justify-center h-64">
             <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
             <span className="ml-2">{getUIText('loading', locale)}...</span>

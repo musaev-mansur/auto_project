@@ -15,7 +15,7 @@ NC='\033[0m' # No Color
 # Configuration
 ENVIRONMENT=${1:-production}
 PROJECT_NAME="carspark"
-DOMAIN=${DOMAIN:-"carspark.be"}
+DOMAIN=${DOMAIN:-"azautos.be"}
 EMAIL=${EMAIL:-"mansurmusaev.work@gmail.com"}
 
 echo -e "${BLUE}🚀 Starting CarsPark deployment for ${ENVIRONMENT} environment${NC}"

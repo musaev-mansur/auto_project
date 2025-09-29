@@ -6,7 +6,7 @@ import { Providers } from './providers'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'CarSpark - Автомобили и запчасти',
+  title: 'azautos.be - Автомобили и запчасти',
   description: 'Платформа для продажи автомобилей и запчастей',
 }
 

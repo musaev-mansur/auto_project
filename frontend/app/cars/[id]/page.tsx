@@ -6,11 +6,8 @@ import { Car } from '@/types/types'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Calendar, Gauge, Fuel, Settings, MapPin, Eye, Phone, MessageCircle, Mail, Edit, Loader2 } from 'lucide-react'
+import { ArrowLeft, Calendar, Gauge, Fuel, Settings, MapPin, Eye, Phone, MessageCircle, Edit, Loader2 } from 'lucide-react'
 import Link from 'next/link'
-import Image from 'next/image'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { ImageGallery } from '@/components/image-gallery'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
@@ -94,18 +91,6 @@ export default function CarDetailPage() {
 
   const formatPrice = (price: number, currency: string) =>
     new Intl.NumberFormat('ru-RU').format(price) + ' ' + currency
-
-
-
-  const ContactForm = ({ type }: { type: 'question' | 'viewing' }) => (
-    <div className="space-y-4">
-      <Input placeholder={locale === 'ru' ? 'Ваше имя' : 'Your name'} />
-      <Input placeholder={locale === 'ru' ? 'Телефон' : 'Phone'} />
-      <Input placeholder={locale === 'ru' ? 'Email (необязательно)' : 'Email (optional)'} />
-      <Textarea placeholder={type === 'question' ? (locale === 'ru' ? 'Ваш вопрос' : 'Your question') : (locale === 'ru' ? 'Удобное время для показа' : 'Convenient viewing time')} rows={3} />
-      <Button className="w-full">{type === 'question' ? (locale === 'ru' ? 'Отправить вопрос' : 'Send question') : (locale === 'ru' ? 'Записаться на показ' : 'Schedule viewing')}</Button>
-    </div>
-  )
 
   // Показываем загрузку пока не загрузимся на клиенте
   if (!isClient) {

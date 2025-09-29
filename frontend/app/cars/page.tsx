@@ -370,10 +370,6 @@ export default function CarsPage() {
                           <span className="text-gray-600">{locale === 'ru' ? 'Владельцев:' : 'Owners:'}</span>
                           <span>{car.owners}</span>
                         </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">{locale === 'ru' ? 'Просмотры:' : 'Views:'}</span>
-                          <span>{car.views}</span>
-                        </div>
                       </div>
                      
                       <div className="mt-4 pt-4 border-t">

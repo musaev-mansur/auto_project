@@ -1,6 +1,6 @@
 # CarSpark Frontend - Docker Setup
 
-Этот документ содержит инструкции по запуску CarSpark Frontend в Docker контейнере.
+Этот документ содержит инструкции по запуску  Frontend в Docker контейнере.
 
 ## Предварительные требования
 

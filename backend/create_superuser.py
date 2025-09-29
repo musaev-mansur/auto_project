@@ -14,7 +14,7 @@ from cars.models import Admin
 def create_superuser():
     """Создает суперпользователя admin"""
     try:
-        print('🔧 Создание суперпользователя...')
+        print('Создание суперпользователя...')
         
         email = os.getenv('ADMIN_EMAIL')
         password = os.getenv('ADMIN_PASSWORD')
@@ -24,10 +24,10 @@ def create_superuser():
         # Проверяем, существует ли уже пользователь
         existing_admin = Admin.objects.filter(email=email).first()
         if existing_admin:
-            print('⚠️ Суперпользователь с таким email уже существует')
-            print('📧 Email:', existing_admin.email)
-            print('👤 Имя:', existing_admin.get_full_name())
-            print('🆔 ID:', existing_admin.id)
+            print('Суперпользователь с таким email уже существует')
+            print('Email:', existing_admin.email)
+            print('Имя:', existing_admin.get_full_name())
+            print('ID:', existing_admin.id)
             return
         
         # Создаем суперпользователя
@@ -40,14 +40,14 @@ def create_superuser():
             role='admin'
         )
         
-        print('✅ Суперпользователь успешно создан!')
-        print('📧 Email:', admin.email)
-        print('👤 Имя:', admin.get_full_name())
-        print('🔑 Пароль:', password)
-        print('🔐 Роль: Суперпользователь')
+        print('Суперпользователь успешно создан!')
+        print('Email:', admin.email)
+        print('Имя:', admin.get_full_name())
+        print('Пароль:', password)
+        print('Роль: Суперпользователь')
         
     except Exception as error:
-        print('❌ Ошибка при создании суперпользователя:', error)
+        print('Ошибка при создании суперпользователя:', error)
 
 if __name__ == '__main__':
     create_superuser()

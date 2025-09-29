@@ -2,53 +2,51 @@
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
+import { Part } from '@/types/types'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { ArrowLeft, Calendar, Tag, MapPin, Eye, Phone, MessageCircle, Mail, Edit, Loader2 } from 'lucide-react'
+import Link from 'next/link'
+import Image from 'next/image'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { ImageGallery } from '@/components/image-gallery'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
-import { ImageGallery } from '@/components/image-gallery'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
-import { 
-  MapPin, 
-  Calendar, 
-  Eye, 
-  MessageCircle, 
-  Phone, 
-  Tag, 
-  Euro,
-  Clock,
-  User,
-  Edit,
-  Loader2
-} from 'lucide-react'
-import { useLocale } from '@/contexts/locale-context'
-import { getConditionText, getCategoryText, getUIText } from '@/lib/translations'
 import { useAuth } from '@/contexts/auth-context'
-import Link from 'next/link'
+import { useLocale } from '@/contexts/locale-context'
+import { getConditionText, getCategoryText, getStatusText } from '@/lib/translations'
 
-interface Part {
-  id: string
-  name: string
-  brand: string
-  model: string
-  yearFrom?: number
-  yearTo?: number
-  category: string
-  condition: string
-  price: number
-  currency: string
-  negotiable: boolean
-  city: string
-  description: string
-  photos: string[]
-  status: string
-  views: number
-  createdAt: string
-  admin: {
-    id: string
-    name: string
-    email: string
+// API → Part
+function transformPartFromAPI(partData: any): Part {
+  return {
+    id: partData.id,
+    name: partData.name,
+    brand: partData.brand,
+    model: partData.model,
+    year_from: partData.year_from,
+    year_to: partData.year_to,
+    category: partData.category,
+    condition: partData.condition as Part['condition'],
+    price: parseFloat(partData.price), // Преобразуем строку в число
+    currency: partData.currency as Part['currency'],
+    negotiable: partData.negotiable,
+    city: partData.city,
+    description: partData.description,
+    photos: partData.photos || [], // Уже массив строк
+    status: partData.status as Part['status'],
+    views: partData.views,
+    created_at: partData.created_at,
+    updated_at: partData.updated_at || partData.created_at, // Если updated_at нет, используем created_at
+    admin: {
+      id: 0, // В API нет admin.id
+      email: '', // В API нет admin.email
+      first_name: partData.admin_name || 'Admin',
+      last_name: '',
+      role: 'admin',
+      date_joined: partData.created_at
+    }
   }
 }
 
@@ -57,11 +55,11 @@ export default function PartDetailPage() {
   const [isClient, setIsClient] = useState(false)
   const [part, setPart] = useState<Part | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  
-  // Используем useAuth и useLocale
+  const [error, setError] = useState('')
+
+  // Используем useAuth и useLocale (с fallback значениями для SSR)
   const { isAuthenticated } = useAuth()
-  const { locale } = useLocale()
+  const { t, locale } = useLocale()
 
   // Проверяем, что мы на клиенте
   useEffect(() => {
@@ -69,71 +67,39 @@ export default function PartDetailPage() {
   }, [])
 
   useEffect(() => {
+    const fetchPart = async () => {
+      if (!params.id) return
+      setLoading(true)
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/parts/${params.id}/`, {
+          credentials: 'include'
+        })
+        if (!response.ok) {
+          throw new Error(response.status === 404 ? (locale === 'ru' ? 'Запчасть не найдена' : 'Part not found') : `${locale === 'ru' ? 'Ошибка' : 'Error'}: ${response.status}`)
+        }
+        const data = await response.json()
+        setPart(transformPartFromAPI(data))
+        setError('')
+      } catch (err) {
+        setError(err instanceof Error ? err.message : (locale === 'ru' ? 'Неизвестная ошибка' : 'Unknown error'))
+      }
+      setLoading(false)
+    }
     fetchPart()
   }, [params.id])
 
-  const fetchPart = async () => {
-    try {
-      setLoading(true)
-      console.log('🔍 Загружаем запчасть с ID:', params.id)
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/parts/${params.id}/`)
-      console.log('📥 Response status:', response.status)
-      const data = await response.json()
-      console.log('📥 Response data:', data)
+  const formatPrice = (price: number, currency: string) =>
+    new Intl.NumberFormat('ru-RU').format(price) + ' ' + currency
 
-      if (response.ok) {
-        setPart(data)
-      } else {
-        setError(data.error || data.detail || 'Failed to fetch part')
-      }
-    } catch (error) {
-      console.error('Error fetching part:', error)
-      setError('Failed to fetch part')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const formatPrice = (price: number, currency: string) => {
-    return new Intl.NumberFormat(locale === 'ru' ? 'ru-RU' : 'en-US', {
-      style: 'currency',
-      currency: currency === 'EUR' ? 'EUR' : currency === 'USD' ? 'USD' : 'RUB'
-    }).format(price)
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString(locale === 'ru' ? 'ru-RU' : 'en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
-  }
-
-  const getCategoryIcon = (category: string) => {
-    const icons: { [key: string]: string } = {
-      engine: '🔧',
-      transmission: '⚙️',
-      brakes: '🛑',
-      suspension: '🔄',
-      electrical: '⚡',
-      body: '🚗',
-      interior: '💺',
-      exterior: '🎨',
-      wheels: '🛞',
-      tires: '🛞',
-      other: '🔧'
-    }
-    return icons[category] || '🔧'
-  }
-
-  const getConditionColor = (condition: string) => {
-    const colors: { [key: string]: string } = {
-      new: 'bg-green-100 text-green-800',
-      used: 'bg-yellow-100 text-yellow-800',
-      refurbished: 'bg-blue-100 text-blue-800'
-    }
-    return colors[condition] || 'bg-gray-100 text-gray-800'
-  }
+  const ContactForm = ({ type }: { type: 'question' | 'viewing' }) => (
+    <div className="space-y-4">
+      <Input placeholder={locale === 'ru' ? 'Ваше имя' : 'Your name'} />
+      <Input placeholder={locale === 'ru' ? 'Телефон' : 'Phone'} />
+      <Input placeholder={locale === 'ru' ? 'Email (необязательно)' : 'Email (optional)'} />
+      <Textarea placeholder={type === 'question' ? (locale === 'ru' ? 'Ваш вопрос' : 'Your question') : (locale === 'ru' ? 'Удобное время для показа' : 'Convenient viewing time')} rows={3} />
+      <Button className="w-full">{type === 'question' ? (locale === 'ru' ? 'Отправить вопрос' : 'Send question') : (locale === 'ru' ? 'Записаться на показ' : 'Schedule viewing')}</Button>
+    </div>
+  )
 
   // Показываем загрузку пока не загрузимся на клиенте
   if (!isClient) {
@@ -144,211 +110,171 @@ export default function PartDetailPage() {
     )
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="container mx-auto px-4 py-8">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="h-96 bg-gray-200 rounded"></div>
-              <div className="space-y-4">
-                <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <Footer />
+  if (loading) return (
+    <div className="container mx-auto px-4 py-8 text-center">
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <span className="ml-2">{locale === 'ru' ? 'Загрузка...' : 'Loading...'}</span>
       </div>
-    )
-  }
-
-  if (error || !part) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center">
-            <div className="text-gray-400 text-6xl mb-4">🔧</div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              {getUIText('partNotFound', locale)}
-            </h1>
-            <p className="text-gray-600 mb-4">
-              {error || getUIText('partNotExists', locale)}
-            </p>
-            <Button asChild>
-              <a href="/parts">
-                {getUIText('backToList', locale)}
-              </a>
-            </Button>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    )
-  }
+    </div>
+  )
+  
+  if (error || !part) return (
+    <div className="container mx-auto px-4 py-8 text-center">
+      <div className="text-red-500">{error || (locale === 'ru' ? 'Запчасть не найдена' : 'Part not found')}</div>
+      <Button asChild className="mt-4">
+        <Link href="/parts">{t('partDetail.backToList')}</Link>
+      </Button>
+    </div>
+  )
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
       
-      <div className="container mx-auto px-4 py-8">
-        {/* Хлебные крошки */}
-        <nav className="mb-6">
-          <ol className="flex items-center space-x-2 text-sm text-gray-600">
-            <li>
-              <a href="/" className="hover:text-blue-600">
-                {getUIText('home', locale)}
-              </a>
-            </li>
-            <li>/</li>
-            <li>
-              <a href="/parts" className="hover:text-blue-600">
-                {getUIText('parts', locale)}
-              </a>
-            </li>
-            <li>/</li>
-            <li className="text-gray-900">{part.name}</li>
-          </ol>
-        </nav>
+      <div className="container mx-auto px-4 py-4 sm:py-8">
+        <div className="flex items-center gap-4 mb-4 sm:mb-6">
+          <Button variant="outline" asChild size="sm" className="text-xs sm:text-sm">
+            <Link href="/parts">
+              <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" /> 
+              {t('partDetail.backToList')}
+            </Link>
+          </Button>
+        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Галерея изображений */}
-          <div>
-            <ImageGallery images={part.photos && part.photos.length > 0 ? part.photos : []} alt={part.name} />
-          </div>
-
-          {/* Информация о запчасти */}
-          <div className="space-y-6">
-            {/* Заголовок и цена */}
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                {part.name}
-              </h1>
-              <p className="text-lg text-gray-600 mb-4">
-                {part.brand} {part.model}
-                {part.yearFrom && part.yearTo && (
-                  <span className="ml-2">
-                    ({part.yearFrom}-{part.yearTo})
-                  </span>
-                )}
-              </p>
-              
-              <div className="flex items-center justify-between mb-4">
-                <div className="text-3xl font-bold text-gray-900">
-                  {formatPrice(part.price, part.currency)}
-                </div>
-                {part.negotiable && (
-                  <Badge variant="secondary" className="bg-orange-100 text-orange-800">
-                    {getUIText('negotiable', locale)}
-                  </Badge>
-                )}
-              </div>
+        <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 mb-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8">
+            {/* Фото */}
+            <div className="lg:col-span-2">
+              <ImageGallery 
+                images={(part.photos || []).filter((photo: string) => photo && typeof photo === 'string' && photo.trim() !== '')} 
+                alt={`${part.name}`}
+                className="w-full"
+              />
             </div>
 
-            {/* Бейджи */}
-            <div className="flex flex-wrap gap-2">
-              <Badge className={getConditionColor(part.condition)}>
-                {getConditionText(part.condition, locale)}
-              </Badge>
-              <Badge variant="outline">
-                {getCategoryIcon(part.category)} {getCategoryText(part.category, locale)}
-              </Badge>
-            </div>
-
-            {/* Кнопки действий */}
-            {isAuthenticated && (
-              <Button asChild className="w-full text-sm sm:text-base bg-orange-600 hover:bg-orange-700" size="sm">
-                <Link href={`/dealer/edit-part/${part.id}`}>
-                  <Edit className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                  {getUIText('edit', locale)}
-                </Link>
-              </Button>
-            )}
-            <div className="flex gap-3">
-              <Button size="lg" className="flex-1 bg-green-600 hover:bg-green-700">
-                <MessageCircle className="h-5 w-5 mr-2" />
-                <a href={`https://wa.me/+32487250651?text=Здравствуйте! Интересует запчасть: ${part.name}`}>
-                  {getUIText('whatsapp', locale)}
-                </a>
-              </Button>
-              <Button variant="outline" size="lg" asChild>
-                <a href="tel:+32487250651">
-                  <Phone className="h-5 w-5 mr-2" />
-                  {getUIText('call', locale)}
-                </a>
-              </Button>
-            </div>
-
-            <Separator />
-
-            {/* Описание */}
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-3">
-                {getUIText('description', locale)}
-              </h2>
-              <p className="text-gray-700 whitespace-pre-wrap">
-                {part.description}
-              </p>
-            </div>
-
-            <Separator />
-
-            {/* Характеристики */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">
-                  {getUIText('specifications', locale)}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">{getUIText('brand', locale)}</span>
-                  <span className="font-medium">{part.brand}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">{getUIText('model', locale)}</span>
-                  <span className="font-medium">{part.model}</span>
-                </div>
-                {part.yearFrom && part.yearTo && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">{getUIText('year', locale)}</span>
-                    <span className="font-medium">{part.yearFrom} - {part.yearTo}</span>
+            {/* Инфо */}
+            <div className="space-y-4 sm:space-y-6">
+              <Card>
+                <CardHeader className="pb-3 sm:pb-6">
+                  <div className="flex items-start justify-between gap-2">
+                    <CardTitle className="text-lg sm:text-xl lg:text-2xl leading-tight">
+                      {part.name}
+                    </CardTitle>
+                    {part.negotiable && <Badge className="bg-green-600 text-xs flex-shrink-0">{t('part.negotiable')}</Badge>}
                   </div>
-                )}
-                <div className="flex justify-between">
-                  <span className="text-gray-600">{getUIText('category', locale)}</span>
-                  <span className="font-medium">{getCategoryIcon(part.category)} {getCategoryText(part.category, locale)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">{getUIText('condition', locale)}</span>
-                  <span className="font-medium">{getConditionText(part.condition, locale)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">{getUIText('city', locale)}</span>
-                  <span className="font-medium">{part.city}</span>
-                </div>
-              </CardContent>
-            </Card>
+                  <div className="text-2xl sm:text-3xl font-bold text-blue-600">
+                    {formatPrice(part.price, part.currency)}
+                  </div>
+                </CardHeader>
 
-            {/* Дополнительная информация */}
-            <div className="flex items-center justify-between text-sm text-gray-500">
-              <div className="flex items-center gap-1">
-                <Calendar className="h-4 w-4" />
-                <span>{formatDate(part.createdAt)}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Eye className="h-4 w-4" />
-                <span>{part.views} {getUIText('views', locale)}</span>
+                <CardContent className="space-y-3 sm:space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 text-xs sm:text-sm">
+                    <div className="flex items-center">
+                      <Tag className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" /> 
+                      {part.brand} {part.model}
+                    </div>
+                    <div className="flex items-center">
+                      <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" /> 
+                      {part.year_from && part.year_to ? `${part.year_from}-${part.year_to}` : 'N/A'}
+                    </div>
+                    <div className="flex items-center">
+                      <Tag className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" /> 
+                      {getCategoryText(part.category, locale)}
+                    </div>
+                    <div className="flex items-center">
+                      <Tag className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" /> 
+                      {getConditionText(part.condition, locale)}
+                    </div>
+                    <div className="flex items-center">
+                      <MapPin className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" /> 
+                      {part.city}
+                    </div>
+                    <div className="flex items-center">
+                      <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" /> 
+                      {part.views} {t('part.views')}
+                    </div>
+                  </div>
+
+                  <div className="pt-3 sm:pt-4 border-t">
+                    <h4 className="font-semibold mb-2 text-sm sm:text-base">{t('partDetail.characteristics')}</h4>
+                    <div className="grid grid-cols-1 gap-1 sm:gap-2 text-xs sm:text-sm">
+                      <div className="flex justify-between">
+                        <span>{t('partDetail.brand')}:</span>
+                        <span>{part.brand}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>{t('partDetail.model')}:</span>
+                        <span>{part.model}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>{t('partDetail.category')}:</span>
+                        <span>{getCategoryText(part.category, locale)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>{t('partDetail.condition')}:</span>
+                        <span>{getConditionText(part.condition, locale)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>{t('partDetail.city')}:</span>
+                        <span>{part.city}</span>
+                      </div>
+                      {(part.year_from || part.year_to) && (
+                        <div className="flex justify-between">
+                          <span>{t('partDetail.year')}:</span>
+                          <span>
+                            {part.year_from && part.year_to 
+                              ? `${part.year_from} - ${part.year_to}`
+                              : part.year_from 
+                                ? `от ${part.year_from}`
+                                : `до ${part.year_to}`
+                            }
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Кнопки */}
+              <div className="space-y-2 sm:space-y-3">
+                {/* Кнопка редактирования для админов */}
+                {isAuthenticated && (
+                  <Button asChild className="w-full text-sm sm:text-base bg-orange-600 hover:bg-orange-700" size="sm">
+                    <Link href={`/dealer/edit-part/${part.id}`}>
+                      <Edit className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                      {locale === 'ru' ? 'Редактировать' : 'Edit'}
+                    </Link>
+                  </Button>
+                )}
+                
+                <Button className="w-full text-sm sm:text-base" size="sm" asChild>
+                  <a href="tel:+32487250651">
+                    <Phone className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> 
+                    {t('part.call')}
+                  </a>
+                </Button>
+                <Button className="w-full bg-green-600 hover:bg-green-700 text-sm sm:text-base" size="sm">
+                  <MessageCircle className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> 
+                  <Link href="https://wa.me/+32487250651">{t('part.whatsapp')}</Link>
+                </Button>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
+        {/* Описание */}
+        {part.description && (
+          <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">{t('partDetail.description')}</h2>
+            <p className="text-gray-700 leading-relaxed text-sm sm:text-base">
+              {part.description}
+            </p>
+          </div>
+        )}
+      </div>
+      
       <Footer />
     </div>
   )

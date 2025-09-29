@@ -90,14 +90,14 @@ export default function AddPartPage() {
       const finalPartData = {
         ...partData,
         status,
-        yearFrom: partData.yearFrom ? parseInt(partData.yearFrom) : null,
-        yearTo: partData.yearTo ? parseInt(partData.yearTo) : null,
+        year_from: partData.yearFrom ? parseInt(partData.yearFrom) : null,
+        year_to: partData.yearTo ? parseInt(partData.yearTo) : null,
         price: parseFloat(partData.price) || 0,
         // Добавляем значения по умолчанию для обязательных полей
         name: partData.name || 'Запчасть',
         brand: partData.brand || 'Неизвестно',
         model: partData.model || 'Неизвестно',
-        category: partData.category || 'Другое',
+        category: partData.category || 'other',
         condition: partData.condition || 'new',
         currency: partData.currency || 'EUR',
         city: partData.city || 'Москва',
@@ -262,7 +262,7 @@ export default function AddPartPage() {
                       onChange={(e) => handleInputChange('yearFrom', e.target.value)}
                       placeholder="2000"
                       min="1900"
-                      max="2030"
+                      max="2060"
                     />
                   </div>
                   <div>
@@ -274,7 +274,7 @@ export default function AddPartPage() {
                       onChange={(e) => handleInputChange('yearTo', e.target.value)}
                       placeholder="2020"
                       min="1900"
-                      max="2030"
+                      max="2060"
                     />
                   </div>
                   <div>
